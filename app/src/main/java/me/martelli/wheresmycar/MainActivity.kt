@@ -1,11 +1,14 @@
 package me.martelli.wheresmycar
 
 import android.Manifest
+import android.app.PendingIntent
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -26,8 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +38,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,11 +49,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -136,9 +142,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         selectedDevice?.let {
+                            SideEffect {
+                                pushDynamicShortcut(context, it.latitude, it.longitude)
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
                             DeviceInfo(device = it)
                         }
+                        InstallShortcut()
                     }
                 }
             }
@@ -158,7 +168,7 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
             confirmButton = {},
             icon = {
                 Icon(
-                    Icons.Default.Build,
+                    painter = painterResource(id = R.drawable.directions_car),
                     contentDescription = null
                 )
             },
@@ -251,6 +261,17 @@ val Context.dataStore by preferencesDataStore(
     name = SharedPreference
 )
 
+fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
+    val shortcut = ShortcutInfoCompat.Builder(context, "navigate")
+        .setShortLabel("Go to Car")
+        .setLongLabel("Navigate to your Car")
+        .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
+        .setIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}")))
+        .build()
+
+    ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
+}
+
 @Composable
 fun GetLocationPermissions(modifier: Modifier = Modifier, permissionsGranted: () -> Unit) {
     val context = LocalContext.current
@@ -325,7 +346,11 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = device.name, fontWeight = FontWeight.Bold)
         Box(
-            modifier = Modifier.aspectRatio(1f).padding(16.dp).fillMaxSize().clip(RoundedCornerShape(24.dp))
+            modifier = Modifier
+                .aspectRatio(1f)
+                .padding(16.dp)
+                .fillMaxSize()
+                .clip(RoundedCornerShape(24.dp))
         ) {
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
@@ -338,11 +363,33 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                 Marker(state = MarkerState(position = coordinates))
             }
             Button(
-                modifier = Modifier.align(Alignment.BottomEnd).padding(horizontal = 8.dp, vertical = 5.dp),
-                onClick = {}
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                onClick = { context.startActivity(intent) }
             ) {
                 Text("Open Maps")
             }
+        }
+    }
+}
+
+@Composable
+fun InstallShortcut() {
+    val context = LocalContext.current
+    val shortcutManager = context.getSystemService<ShortcutManager>()
+
+    if (shortcutManager!!.isRequestPinShortcutSupported) {
+        Button(
+            onClick = {
+                val pinShortcutInfo = ShortcutInfo.Builder(context, "navigate").build()
+                val pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(pinShortcutInfo)
+                val successCallback = PendingIntent.getBroadcast(context, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE)
+
+                shortcutManager.requestPinShortcut(pinShortcutInfo, successCallback.intentSender)
+            }
+        ) {
+            Text("Add shortcut")
         }
     }
 }

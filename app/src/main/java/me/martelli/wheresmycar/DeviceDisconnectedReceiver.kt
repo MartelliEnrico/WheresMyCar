@@ -29,6 +29,8 @@ class DeviceDisconnectedReceiver : BroadcastReceiver() {
                         preferences[Longitude] = it.longitude.toFloat()
                     }
                 }
+
+                pushDynamicShortcut(context, it.latitude, it.longitude)
             }
         }
     }
