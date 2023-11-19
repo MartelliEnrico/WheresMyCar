@@ -7,6 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
 import androidx.core.content.getSystemService
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 class DeviceDisconnectedReceiver : BroadcastReceiver() {
     @SuppressLint("MissingPermission")
@@ -15,17 +18,16 @@ class DeviceDisconnectedReceiver : BroadcastReceiver() {
         if (intent?.action !== BluetoothDevice.ACTION_ACL_DISCONNECTED) return
 
         val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java) ?: return
-
-        val sharedPref = context.getSharedPreferences(SharedPreference, Context.MODE_PRIVATE)
-        val savedAddress = sharedPref?.getString(Address, null)
+        val savedAddress = runBlocking { context.dataStore.data.first()[Address] }
 
         if (device.address == savedAddress) {
             val locationManager = context.getSystemService<LocationManager>()
             locationManager?.getCurrentLocation(LocationManager.FUSED_PROVIDER, null, context.mainExecutor) {
-                with (sharedPref.edit()) {
-                    putFloat(Latitude, it.latitude.toFloat())
-                    putFloat(Longitude, it.longitude.toFloat())
-                    apply()
+                runBlocking {
+                    context.dataStore.edit { preferences ->
+                        preferences[Latitude] = it.latitude.toFloat()
+                        preferences[Longitude] = it.longitude.toFloat()
+                    }
                 }
             }
         }

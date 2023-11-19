@@ -18,6 +18,10 @@
         android:theme="@style/Theme.WheresMyCar"
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="34">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDfFNKTbtRjSMrr-A-q3yMFO7bF3OyzVSI" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

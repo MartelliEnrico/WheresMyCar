@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
@@ -17,13 +16,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.AlertDialog
@@ -38,23 +40,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.channels.trySendBlocking
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.parcelize.Parcelize
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import java.io.IOException
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -62,8 +78,31 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val context = LocalContext.current
-            val selectedDevice by subscribeToDevice(context).collectAsStateWithLifecycle(initialValue = getSavedDevice(context))
+            val coroutineScope = rememberCoroutineScope()
+
             var permissionsGranted by rememberSaveable { mutableStateOf(permissionsGranted(context, *AllLocationPermissions)) }
+
+            val selectedDevice by remember {
+                context.dataStore.data
+                    .catch { e ->
+                        if (e is IOException) {
+                            emit(emptyPreferences())
+                        } else {
+                            throw e
+                        }
+                    }.map { preferences ->
+                        val name = preferences[Name]
+                        val address = preferences[Address]
+                        val latitude = preferences[Latitude] ?: 0.0
+                        val longitude = preferences[Longitude] ?: 0.0
+
+                        if (name != null && address != null) {
+                            Device(name, address, false, latitude.toDouble(), longitude.toDouble())
+                        } else {
+                            null
+                        }
+                    }
+            }.collectAsStateWithLifecycle(initialValue = null)
 
             WheresMyCarTheme {
                 Scaffold(
@@ -72,13 +111,20 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(innerPadding),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         FindCar(
                             selectDevice = {
-                                saveDevice(context, it)
+                                coroutineScope.launch {
+                                    context.dataStore.edit { preferences ->
+                                        preferences[Name] = it.name
+                                        preferences[Address] = it.address
+                                    }
+                                }
                             }
                         )
                         if (!permissionsGranted) {
@@ -191,54 +237,19 @@ data class Device(
     val name: String,
     val address: String,
     val connected: Boolean = false,
-    val latitude: Float = -1f,
-    val longitude: Float = -1f
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
 ) : Parcelable
 
 const val SharedPreference = "saved_device"
-const val Name = "name"
-const val Address = "address"
-const val Latitude = "Latitude"
-const val Longitude = "Longitude"
+val Name = stringPreferencesKey("name")
+val Address = stringPreferencesKey("address")
+val Latitude = floatPreferencesKey("latitude")
+val Longitude = floatPreferencesKey("longitude")
 
-fun getSavedDevice(context: Context): Device? {
-    val sharedPref = context.getSharedPreferences(SharedPreference, Context.MODE_PRIVATE)
-    val name = sharedPref.getString(Name, null)
-    val address = sharedPref.getString(Address, null)
-    val latitude = sharedPref.getFloat(Latitude, -1f)
-    val longitude = sharedPref.getFloat(Longitude, -1f)
-
-    if (name != null && address != null) {
-        return Device(name, address, false, latitude, longitude)
-    } else {
-        return null
-    }
-}
-
-fun subscribeToDevice(context: Context): Flow<Device> {
-    return callbackFlow {
-        val listener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPref, _ ->
-            val device = getSavedDevice(context)
-
-            if (device != null) {
-                trySendBlocking(device)
-            }
-        }
-
-        val sharedPref = context.getSharedPreferences(SharedPreference, Context.MODE_PRIVATE)
-        sharedPref.registerOnSharedPreferenceChangeListener(listener)
-        awaitClose { sharedPref.unregisterOnSharedPreferenceChangeListener(listener) }
-    }
-}
-
-fun saveDevice(context: Context, device: Device) {
-    val sharedPref = context.getSharedPreferences(SharedPreference, Context.MODE_PRIVATE)
-    with(sharedPref.edit()) {
-        putString(Name, device.name)
-        putString(Address, device.address)
-        commit()
-    }
-}
+val Context.dataStore by preferencesDataStore(
+    name = SharedPreference
+)
 
 @Composable
 fun GetLocationPermissions(modifier: Modifier = Modifier, permissionsGranted: () -> Unit) {
@@ -306,11 +317,32 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
     val context = LocalContext.current
     val intent = remember(device) { Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${device.latitude}%2C${device.longitude}")) }
 
+    val coordinates = LatLng(device.latitude, device.longitude)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(coordinates, 16f)
+    }
+
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = device.name, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { context.startActivity(intent) }) {
-            Text("Open Maps")
+        Box(
+            modifier = Modifier.aspectRatio(1f).padding(16.dp).fillMaxSize().clip(RoundedCornerShape(24.dp))
+        ) {
+            GoogleMap(
+                modifier = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                uiSettings = MapUiSettings(
+                    zoomControlsEnabled = false
+                ),
+                onMapClick = { context.startActivity(intent) }
+            ) {
+                Marker(state = MarkerState(position = coordinates))
+            }
+            Button(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(horizontal = 8.dp, vertical = 5.dp),
+                onClick = {}
+            ) {
+                Text("Open Maps")
+            }
         }
     }
 }
