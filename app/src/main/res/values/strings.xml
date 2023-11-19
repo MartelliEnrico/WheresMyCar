@@ -1,5 +1,11 @@
 <resources>
     <string name="app_name">Where\'s My Car</string>
+    <string name="find_car_title">Select your Car</string>
+    <string name="device_connected">Connected</string>
+    <string name="find_car_button">Select your car</string>
     <string name="shortcut_short_description">Go to Car</string>
-    <string name="shortcut_long_description">Navigate to your Car</string>
+    <string name="shortcut_long_description">Find your Car in Maps</string>
+    <string name="grant_location_permissions">Grant background location permissions</string>
+    <string name="open_maps">Open Maps</string>
+    <string name="add_shortcut">Add Shortcut</string>
 </resources>

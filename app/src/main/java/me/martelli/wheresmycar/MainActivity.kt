@@ -73,6 +73,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -88,27 +89,7 @@ class MainActivity : ComponentActivity() {
 
             var permissionsGranted by rememberSaveable { mutableStateOf(permissionsGranted(context, *AllLocationPermissions)) }
 
-            val selectedDevice by remember {
-                context.dataStore.data
-                    .catch { e ->
-                        if (e is IOException) {
-                            emit(emptyPreferences())
-                        } else {
-                            throw e
-                        }
-                    }.map { preferences ->
-                        val name = preferences[Name]
-                        val address = preferences[Address]
-                        val latitude = preferences[Latitude] ?: 0.0
-                        val longitude = preferences[Longitude] ?: 0.0
-
-                        if (name != null && address != null) {
-                            Device(name, address, false, latitude.toDouble(), longitude.toDouble())
-                        } else {
-                            null
-                        }
-                    }
-            }.collectAsStateWithLifecycle(initialValue = null)
+            val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(initialValue = null)
 
             WheresMyCarTheme {
                 Scaffold(
@@ -173,7 +154,7 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
                 )
             },
             title = {
-                Text("Select your Car")
+                Text(stringResource(id = R.string.find_car_title))
             },
             text = {
                 val connectedDevices = getConnectedBluetoothDevices(context)
@@ -192,7 +173,7 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
                             },
                             overlineContent = {
                                 if (it.connected) {
-                                    Text("Connected")
+                                    Text(stringResource(id = R.string.device_connected))
                                 }
                             }
                         )
@@ -229,7 +210,7 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
             }
         }
     ) {
-        Text("Select you car")
+        Text(stringResource(id = R.string.find_car_button))
     }
 }
 
@@ -261,12 +242,38 @@ val Context.dataStore by preferencesDataStore(
     name = SharedPreference
 )
 
+val Context.savedDevice: Flow<Device?>
+    get() = dataStore.data
+        .catch { e ->
+            if (e is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw e
+            }
+        }.map { preferences ->
+            val name = preferences[Name]
+            val address = preferences[Address]
+            val latitude = preferences[Latitude] ?: 0.0
+            val longitude = preferences[Longitude] ?: 0.0
+
+            if (name != null && address != null) {
+                Device(name, address, false, latitude.toDouble(), longitude.toDouble())
+            } else {
+                null
+            }
+        }
+
+const val ShortcutId = "navigate"
+
+fun locationIntent(latitude: Double, longitude: Double) =
+    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}"))
+
 fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
-    val shortcut = ShortcutInfoCompat.Builder(context, "navigate")
-        .setShortLabel("Go to Car")
-        .setLongLabel("Navigate to your Car")
+    val shortcut = ShortcutInfoCompat.Builder(context, ShortcutId)
+        .setShortLabel(context.resources.getString(R.string.shortcut_short_description))
+        .setLongLabel(context.resources.getString(R.string.shortcut_long_description))
         .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
-        .setIntent(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}")))
+        .setIntent(locationIntent(latitude, longitude))
         .build()
 
     ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
@@ -322,7 +329,7 @@ fun GetLocationPermissions(modifier: Modifier = Modifier, permissionsGranted: ()
             }
         }
     ) {
-        Text("Grant background location permissions")
+        Text(stringResource(id = R.string.grant_location_permissions))
     }
 }
 
@@ -336,7 +343,7 @@ fun permissionsGranted(context: Context, vararg permissions: String) = permissio
 @Composable
 fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
     val context = LocalContext.current
-    val intent = remember(device) { Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${device.latitude}%2C${device.longitude}")) }
+    val intent = remember(device) { locationIntent(device.latitude, device.longitude) }
 
     val coordinates = LatLng(device.latitude, device.longitude)
     val cameraPositionState = rememberCameraPositionState {
@@ -368,7 +375,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                     .padding(horizontal = 8.dp, vertical = 5.dp),
                 onClick = { context.startActivity(intent) }
             ) {
-                Text("Open Maps")
+                Text(stringResource(id = R.string.open_maps))
             }
         }
     }
@@ -382,14 +389,14 @@ fun InstallShortcut() {
     if (shortcutManager!!.isRequestPinShortcutSupported) {
         Button(
             onClick = {
-                val pinShortcutInfo = ShortcutInfo.Builder(context, "navigate").build()
+                val pinShortcutInfo = ShortcutInfo.Builder(context, ShortcutId).build()
                 val pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(pinShortcutInfo)
                 val successCallback = PendingIntent.getBroadcast(context, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE)
 
                 shortcutManager.requestPinShortcut(pinShortcutInfo, successCallback.intentSender)
             }
         ) {
-            Text("Add shortcut")
+            Text(stringResource(id = R.string.add_shortcut))
         }
     }
 }
