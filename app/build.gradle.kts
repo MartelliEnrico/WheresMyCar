@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.org.jetbrains.kotlin.parcelize)
+    alias(libs.plugins.maps.secrets)
 }
 
 android {
@@ -48,6 +49,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+secrets {
+    propertiesFileName = "local.properties"
 }
 
 dependencies {
