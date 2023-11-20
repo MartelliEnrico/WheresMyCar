@@ -11,7 +11,6 @@ import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -38,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,10 +62,10 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.parcelize.Parcelize
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -223,14 +223,13 @@ fun getConnectedBluetoothDevices(context: Context): List<Device> {
     }
 }
 
-@Parcelize
 data class Device(
     val name: String,
     val address: String,
     val connected: Boolean = false,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-) : Parcelable
+)
 
 const val SharedPreference = "saved_device"
 val Name = stringPreferencesKey("name")
@@ -348,6 +347,11 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
     val coordinates = LatLng(device.latitude, device.longitude)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(coordinates, 16f)
+    }
+
+    LaunchedEffect(coordinates) {
+        val position = CameraPosition.fromLatLngZoom(coordinates, 16f)
+        cameraPositionState.move(CameraUpdateFactory.newCameraPosition(position))
     }
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {

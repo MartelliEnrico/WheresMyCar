@@ -31,5 +31,4 @@ maps = "com.google.maps.android:maps-compose:4.1.1"
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-org-jetbrains-kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
