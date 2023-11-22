@@ -38,7 +38,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,18 +52,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.content.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -77,6 +75,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.io.IOException
 
 class MainActivity : ComponentActivity() {
@@ -86,9 +85,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             val coroutineScope = rememberCoroutineScope()
-
-            var permissionsGranted by rememberSaveable { mutableStateOf(permissionsGranted(context, *AllLocationPermissions)) }
-
             val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(initialValue = null)
 
             WheresMyCarTheme {
@@ -114,22 +110,28 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
-                        if (!permissionsGranted) {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            GetLocationPermissions(
-                                permissionsGranted = {
-                                    permissionsGranted = true
-                                }
-                            )
-                        }
+
                         selectedDevice?.let {
-                            SideEffect {
-                                pushDynamicShortcut(context, it.latitude, it.longitude)
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
                             DeviceInfo(device = it)
                         }
+
                         InstallShortcut()
+
+                        PermissionBox(
+                            permissions = listOf(
+                                Manifest.permission.BLUETOOTH_CONNECT,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ),
+                            description = stringResource(id = R.string.permissions_rationale)
+                        ) {
+                            PermissionBox(
+                                permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                                description = stringResource(id = R.string.background_rationale),
+                                onGranted = {}
+                            )
+                        }
                     }
                 }
             }
@@ -187,7 +189,6 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Permission Accepted: Do something
             openDialog = true
         }
     }
@@ -196,15 +197,13 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
         modifier = modifier,
         onClick = {
             when (PackageManager.PERMISSION_GRANTED) {
-                ContextCompat.checkSelfPermission(
+                checkSelfPermission(
                     context,
                     Manifest.permission.BLUETOOTH_CONNECT
                 ) -> {
-                    // Some works that require permission
                     openDialog = true
                 }
                 else -> {
-                    // Asking for permission
                     launcher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                 }
             }
@@ -269,74 +268,13 @@ fun locationIntent(latitude: Double, longitude: Double) =
 
 fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
     val shortcut = ShortcutInfoCompat.Builder(context, ShortcutId)
-        .setShortLabel(context.resources.getString(R.string.shortcut_short_description))
-        .setLongLabel(context.resources.getString(R.string.shortcut_long_description))
+        .setShortLabel(context.getString(R.string.shortcut_short_description))
+        .setLongLabel(context.getString(R.string.shortcut_long_description))
         .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
         .setIntent(locationIntent(latitude, longitude))
         .build()
 
     ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
-}
-
-@Composable
-fun GetLocationPermissions(modifier: Modifier = Modifier, permissionsGranted: () -> Unit) {
-    val context = LocalContext.current
-
-    val launcherSingle = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Permission Accepted: Do something
-            permissionsGranted()
-        }
-    }
-
-    val launcherMultiple = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val coarse = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        val fine = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
-
-        if (coarse && fine) {
-            val backgroundPermission = permissionsGranted(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-
-            if (backgroundPermission) {
-                permissionsGranted()
-            } else {
-                launcherSingle.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            }
-        }
-    }
-
-    Button(
-        modifier = modifier,
-        onClick = {
-            val locationPermissions = permissionsGranted(context, *LocationPermissions)
-            val backgroundPermission = permissionsGranted(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            when {
-                locationPermissions && backgroundPermission -> {
-                    // Some works that require permission
-                    permissionsGranted()
-                }
-                locationPermissions -> {
-                    launcherSingle.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                }
-                else -> {
-                    // Asking for permission
-                    launcherMultiple.launch(LocationPermissions)
-                }
-            }
-        }
-    ) {
-        Text(stringResource(id = R.string.grant_location_permissions))
-    }
-}
-
-val LocationPermissions = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
-val AllLocationPermissions = LocationPermissions + Manifest.permission.ACCESS_BACKGROUND_LOCATION
-
-fun permissionsGranted(context: Context, vararg permissions: String) = permissions.all {
-    ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
 }
 
 @Composable

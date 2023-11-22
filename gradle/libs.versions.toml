@@ -27,6 +27,8 @@ material3 = { group = "androidx.compose.material3", name = "material3" }
 lifecycle-runtime-compose = "androidx.lifecycle:lifecycle-runtime-compose:2.6.2"
 datastore-preferences = "androidx.datastore:datastore-preferences:1.0.0"
 maps = "com.google.maps.android:maps-compose:4.3.0"
+accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.32.0"
+play-services-location = "com.google.android.gms:play-services-location:21.0.1"
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }
