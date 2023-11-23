@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '30 16 * * 1'
+    - cron: "30 16 * * 1"
 
 jobs:
   analyze:
@@ -28,14 +28,15 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
-        languages: 'java-kotlin'
+        languages: "java-kotlin"
         queries: security-and-quality
 
     - name: Set Up JDK
       uses: actions/setup-java@v3
       with:
-        java-version: '11'
-        cache: 'gradle'
+        distribution: zulu
+        java-version: 21
+        cache: gradle
 
     - name: Change wrapper permissions
       run: chmod +x ./gradlew
