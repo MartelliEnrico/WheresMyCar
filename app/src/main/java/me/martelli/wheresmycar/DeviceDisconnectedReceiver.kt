@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 class DeviceDisconnectedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         context ?: return
-        if (intent?.action !== BluetoothDevice.ACTION_ACL_DISCONNECTED) return
+        if (intent?.action != BluetoothDevice.ACTION_ACL_DISCONNECTED) return
         if (checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
 
         val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java) ?: return
