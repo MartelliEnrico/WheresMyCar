@@ -17,6 +17,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,7 +67,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
@@ -128,7 +131,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             PermissionBox(
                                 permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                                description = stringResource(id = R.string.background_rationale),
+                                description = stringResource(id = R.string.background_rationale, context.packageManager.backgroundPermissionOptionLabel),
                                 onGranted = {}
                             )
                         }
@@ -156,7 +159,7 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
                 )
             },
             title = {
-                Text(stringResource(id = R.string.find_car_title))
+                Text(stringResource(id = R.string.find_car))
             },
             text = {
                 val connectedDevices = getConnectedBluetoothDevices(context)
@@ -209,7 +212,7 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
             }
         }
     ) {
-        Text(stringResource(id = R.string.find_car_button))
+        Text(stringResource(id = R.string.find_car))
     }
 }
 
@@ -301,9 +304,18 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                 .fillMaxSize()
                 .clip(RoundedCornerShape(24.dp))
         ) {
+            val mapStyleOptions = if (isSystemInDarkTheme()) {
+                MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
+            } else {
+                null
+            }
+
             GoogleMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
+                properties = MapProperties(
+                    mapStyleOptions = mapStyleOptions
+                ),
                 uiSettings = MapUiSettings(
                     zoomControlsEnabled = false
                 ),
@@ -311,6 +323,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
             ) {
                 Marker(state = MarkerState(position = coordinates))
             }
+
             Button(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)

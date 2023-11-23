@@ -151,7 +151,7 @@ private fun PermissionScreen(
                 showRationale = false
             },
             title = {
-                Text(text = "Permissions required")
+                Text(text = stringResource(id = R.string.permissions_title))
             },
             text = {
                 Text(text = description)
