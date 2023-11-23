@@ -23,16 +23,16 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2
       with:
         languages: "java-kotlin"
         queries: security-and-quality
 
     - name: Set Up JDK
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@0ab4596768b603586c0de567f2430c30f5b0d2b0 # v3
       with:
         distribution: zulu
         java-version: 21
@@ -50,13 +50,13 @@ jobs:
       run: ./gradlew build
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2
       with:
         upload: false
         output: sarif-results
 
     - name: Filter SARIF
-      uses: advanced-security/filter-sarif@v1
+      uses: advanced-security/filter-sarif@f3b8118a9349d88f7b1c0c488476411145b6270d # v1
       with:
         patterns: |
           -.gradle/**
@@ -64,7 +64,7 @@ jobs:
         output: sarif-results/java.sarif
 
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2
       with:
         sarif_file: sarif-results/java.sarif
         category: "/language:java-kotlin"
