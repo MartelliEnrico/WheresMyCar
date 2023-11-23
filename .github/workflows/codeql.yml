@@ -60,11 +60,11 @@ jobs:
       with:
         patterns: |
           -.gradle/**
-        input: sarif-results/java-kotlin.sarif
-        output: sarif-results/java-kotlin.sarif
+        input: sarif-results/java.sarif
+        output: sarif-results/java.sarif
 
     - name: Upload SARIF
       uses: github/codeql-action/upload-sarif@v2
       with:
-        sarif_file: sarif-results/java-kotlin.sarif
+        sarif_file: sarif-results/java.sarif
         category: "/language:java-kotlin"
