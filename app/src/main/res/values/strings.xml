@@ -6,6 +6,7 @@
     <string name="shortcut_long_description">Find your Car in Maps</string>
     <string name="grant_location_permissions">Grant background location permissions</string>
     <string name="open_maps">Open Maps</string>
+    <string name="last_check">Last checked on %s</string>
     <string name="add_shortcut">Add Shortcut</string>
     <string name="permissions_rationale">The application needs location and bluetooth permissions to be able to listen for whenever your phone gets disconnected from your car, and to track the location when it happens.</string>
     <string name="background_rationale">The application needs to be able to track your location while the app is in the background, so that it can save your car location more easily. Please select the option \"%s\" in the following screen.</string>

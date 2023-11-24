@@ -6,6 +6,7 @@
     <string name="shortcut_long_description">Trova l\'Auto su Maps</string>
     <string name="grant_location_permissions">Concedi autorizzazioni di localizzazione in background</string>
     <string name="open_maps">Apri Maps</string>
+    <string name="last_check">Ultimo controllo il %s</string>
     <string name="add_shortcut">Aggiungi Shortcut</string>
     <string name="permissions_rationale">L\'applicazione necessita delle autorizzazioni per localizzazione e connessione bluetooth per poter tenere traccia di quando la tua auto si disconnette dal tuo telefono, e per tracciarne la posizione quando accade.</string>
     <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%s\" nella pagina seguente.</string>

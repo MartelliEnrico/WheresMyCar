@@ -11,6 +11,7 @@ import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.net.Uri
 import android.os.Bundle
+import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -34,6 +35,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -61,6 +63,7 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -231,6 +234,7 @@ data class Device(
     val connected: Boolean = false,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
+    val time: Long = 0
 )
 
 const val SharedPreference = "saved_device"
@@ -238,6 +242,7 @@ val Name = stringPreferencesKey("name")
 val Address = stringPreferencesKey("address")
 val Latitude = floatPreferencesKey("latitude")
 val Longitude = floatPreferencesKey("longitude")
+val Time = longPreferencesKey("time")
 
 val Context.dataStore by preferencesDataStore(
     name = SharedPreference
@@ -256,9 +261,10 @@ val Context.savedDevice: Flow<Device?>
             val address = preferences[Address]
             val latitude = preferences[Latitude] ?: 0.0
             val longitude = preferences[Longitude] ?: 0.0
+            val time = preferences[Time] ?: 0
 
             if (name != null && address != null) {
-                Device(name, address, false, latitude.toDouble(), longitude.toDouble())
+                Device(name, address, false, latitude.toDouble(), longitude.toDouble(), time)
             } else {
                 null
             }
@@ -297,6 +303,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text = device.name, fontWeight = FontWeight.Bold)
+
         Box(
             modifier = Modifier
                 .aspectRatio(1f)
@@ -332,6 +339,18 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
             ) {
                 Text(stringResource(id = R.string.open_maps))
             }
+        }
+
+        if (device.time > 0) {
+            val datetime = DateUtils.formatDateTime(
+                context,
+                device.time,
+                DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
+            )
+            Text(
+                text = stringResource(id = R.string.last_check, datetime),
+                style = MaterialTheme.typography.labelSmall
+            )
         }
     }
 }
