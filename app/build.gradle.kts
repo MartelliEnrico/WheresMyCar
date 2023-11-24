@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.maps)
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
+    implementation(libs.work.runtime)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

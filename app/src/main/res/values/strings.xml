@@ -15,4 +15,6 @@
     <string name="grant_permissions">Grant Permissions</string>
     <string name="continue_button">Continue</string>
     <string name="dismiss_button">Dismiss</string>
+    <string name="notification_title">Getting Car Location</string>
+    <string name="cancel">Cancel</string>
 </resources>

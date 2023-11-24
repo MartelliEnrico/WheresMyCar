@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,9 +58,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.content.getSystemService
-import androidx.core.content.pm.ShortcutInfoCompat
-import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.drawable.IconCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -134,7 +132,10 @@ class MainActivity : ComponentActivity() {
                         ) {
                             PermissionBox(
                                 permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                                description = stringResource(id = R.string.background_rationale, context.packageManager.backgroundPermissionOptionLabel),
+                                description = stringResource(
+                                    id = R.string.background_rationale,
+                                    context.packageManager.backgroundPermissionOptionLabel
+                                ),
                                 onGranted = {}
                             )
                         }
@@ -275,17 +276,6 @@ const val ShortcutId = "navigate"
 fun locationIntent(latitude: Double, longitude: Double) =
     Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}"))
 
-fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
-    val shortcut = ShortcutInfoCompat.Builder(context, ShortcutId)
-        .setShortLabel(context.getString(R.string.shortcut_short_description))
-        .setLongLabel(context.getString(R.string.shortcut_long_description))
-        .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
-        .setIntent(locationIntent(latitude, longitude))
-        .build()
-
-    ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
-}
-
 @Composable
 fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
     val context = LocalContext.current
@@ -351,6 +341,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                 text = stringResource(id = R.string.last_check, datetime),
                 style = MaterialTheme.typography.labelSmall
             )
+            Spacer(modifier = Modifier.size(16.dp))
         }
     }
 }
