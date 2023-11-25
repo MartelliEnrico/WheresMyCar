@@ -74,9 +74,9 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let {
-                    locationClient.removeLocationUpdates(this)
-
-                    cont.resume(it)
+                    if (cont.isActive) {
+                        cont.resume(it)
+                    }
                 }
             }
         }

@@ -7,8 +7,6 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ShortcutInfo
-import android.content.pm.ShortcutManager
 import android.net.Uri
 import android.os.Bundle
 import android.text.format.DateUtils
@@ -110,7 +108,11 @@ class MainActivity : ComponentActivity() {
             WheresMyCarTheme {
                 Scaffold(
                     topBar = {
-                        TopAppBar(title = { Text(stringResource(R.string.app_name)) })
+                        TopAppBar(
+                            title = {
+                                Text(stringResource(R.string.app_name))
+                            }
+                        )
                     }
                 ) { innerPadding ->
                     Column(
@@ -376,16 +378,15 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
 @Composable
 fun InstallShortcut() {
     val context = LocalContext.current
-    val shortcutManager = context.getSystemService<ShortcutManager>()
 
-    if (shortcutManager!!.isRequestPinShortcutSupported) {
+    if (ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
         Button(
             onClick = {
-                val pinShortcutInfo = ShortcutInfo.Builder(context, ShortcutId).build()
-                val pinnedShortcutCallbackIntent = shortcutManager.createShortcutResultIntent(pinShortcutInfo)
-                val successCallback = PendingIntent.getBroadcast(context, 0, pinnedShortcutCallbackIntent, PendingIntent.FLAG_IMMUTABLE)
+                val shortcut = ShortcutInfoCompat.Builder(context, ShortcutId).build()
+                val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
+                val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
 
-                shortcutManager.requestPinShortcut(pinShortcutInfo, successCallback.intentSender)
+                ShortcutManagerCompat.requestPinShortcut(context, shortcut, successCallback.intentSender)
             }
         ) {
             Text(stringResource(id = R.string.add_shortcut))
