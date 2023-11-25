@@ -33,7 +33,8 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
             return Result.failure()
         }
 
-        val notificationChannel = NotificationChannel(NotificationChannelId, NotificationChannelName, NotificationManager.IMPORTANCE_LOW)
+        val channelName = applicationContext.getString(R.string.channel_name)
+        val notificationChannel = NotificationChannel(NotificationChannelId, channelName, NotificationManager.IMPORTANCE_LOW)
         val notificationManager = applicationContext.getSystemService<NotificationManager>()
         notificationManager!!.createNotificationChannel(notificationChannel)
 
@@ -75,9 +76,9 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
     @RequiresPermission(anyOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
     private suspend fun getLocation() = suspendCancellableCoroutine { cont ->
         val locationClient = LocationServices.getFusedLocationProviderClient(applicationContext)
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 100)
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, IntervalMillis)
             .setWaitForAccurateLocation(true)
-            .setMaxUpdateDelayMillis(100)
+            .setMaxUpdateDelayMillis(IntervalMillis)
             .build()
 
         val locationCallback = object : LocationCallback() {
@@ -91,14 +92,15 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
         }
 
         locationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+            .addOnFailureListener { cont.cancel(it) }
 
         cont.invokeOnCancellation { locationClient.removeLocationUpdates(locationCallback) }
     }
 
     companion object {
         const val NotificationChannelId = "location"
-        const val NotificationChannelName = "Get Device Location"
         const val NotificationId = "location"
-        const val NotificationIdNumber = 123
+        const val NotificationIdNumber = 1
+        const val IntervalMillis = 100L
     }
 }

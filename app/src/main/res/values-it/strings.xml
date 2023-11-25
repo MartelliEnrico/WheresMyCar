@@ -15,6 +15,7 @@
     <string name="grant_permissions">Concedi Autorizzazioni</string>
     <string name="continue_button">Continua</string>
     <string name="dismiss_button">Annulla</string>
+    <string name="channel_name">Servizio in background</string>
     <string name="notification_title">Ottengo la posizione dell\'auto</string>
     <string name="cancel">Annulla</string>
 </resources>
