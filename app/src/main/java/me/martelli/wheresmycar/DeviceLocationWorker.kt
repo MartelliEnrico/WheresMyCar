@@ -11,9 +11,6 @@ import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
-import androidx.core.content.pm.ShortcutInfoCompat
-import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.drawable.IconCompat
 import androidx.datastore.preferences.core.edit
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -61,14 +58,7 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
             preferences[Time] = location.time
         }
 
-        val shortcut = ShortcutInfoCompat.Builder(applicationContext, ShortcutId)
-            .setShortLabel(applicationContext.getString(R.string.shortcut_short_description))
-            .setLongLabel(applicationContext.getString(R.string.shortcut_long_description))
-            .setIcon(IconCompat.createWithResource(applicationContext, R.drawable.directions_car))
-            .setIntent(locationIntent(location.latitude, location.longitude))
-            .build()
-
-        ShortcutManagerCompat.pushDynamicShortcut(applicationContext, shortcut)
+        pushDynamicShortcut(applicationContext, location.latitude, location.longitude)
 
         return Result.success()
     }

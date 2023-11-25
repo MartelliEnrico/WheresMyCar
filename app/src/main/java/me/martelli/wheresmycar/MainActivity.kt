@@ -58,6 +58,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.content.getSystemService
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
+import androidx.core.graphics.drawable.IconCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -77,8 +81,10 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.io.IOException
 
@@ -86,6 +92,16 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (ShortcutManagerCompat.getDynamicShortcuts(applicationContext).size == 0) {
+            if (ShortcutManagerCompat.getShortcuts(applicationContext, FLAG_MATCH_PINNED).size > 0) {
+                val device = runBlocking { applicationContext.savedDevice.first() }
+                device?.let {
+                    pushDynamicShortcut(applicationContext, it.latitude, it.longitude)
+                }
+            }
+        }
+
         setContent {
             val context = LocalContext.current
             val coroutineScope = rememberCoroutineScope()
@@ -276,6 +292,17 @@ const val ShortcutId = "navigate"
 fun locationIntent(latitude: Double, longitude: Double) =
     Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}"))
 
+fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
+    val shortcut = ShortcutInfoCompat.Builder(context, ShortcutId)
+        .setShortLabel(context.getString(R.string.shortcut_short_description))
+        .setLongLabel(context.getString(R.string.shortcut_long_description))
+        .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
+        .setIntent(locationIntent(latitude, longitude))
+        .build()
+
+    ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
+}
+
 @Composable
 fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
     val context = LocalContext.current
@@ -288,7 +315,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
 
     LaunchedEffect(coordinates) {
         val position = CameraPosition.fromLatLngZoom(coordinates, 16f)
-        cameraPositionState.move(CameraUpdateFactory.newCameraPosition(position))
+        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(position))
     }
 
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
