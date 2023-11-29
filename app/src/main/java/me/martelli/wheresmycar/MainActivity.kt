@@ -132,127 +132,129 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
 
             val configs by remember { context.configurations }.collectAsStateWithLifecycle(
-                initialValue = DefaultConfigs
+                initialValue = null
             )
 
-            WheresMyCarTheme {
-                AnimatedContent(
-                    targetState = configs.onboardingCompleted,
-                    label = "main_content"
-                ) { onboardingCompleted ->
-                    if (onboardingCompleted) {
-                        val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(
-                            initialValue = null
-                        )
+            configs?.let {
+                WheresMyCarTheme {
+                    AnimatedContent(
+                        targetState = it.onboardingCompleted,
+                        label = "main_content"
+                    ) { onboardingCompleted ->
+                        if (onboardingCompleted) {
+                            val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(
+                                initialValue = null
+                            )
 
-                        Scaffold(
-                            topBar = {
-                                TopAppBar(
-                                    title = {
-                                        Text(stringResource(R.string.app_name))
-                                    }
-                                )
-                            }
-                        ) { innerPadding ->
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                FindCar()
-
-                                selectedDevice?.let {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    DeviceInfo(device = it)
+                            Scaffold(
+                                topBar = {
+                                    TopAppBar(
+                                        title = {
+                                            Text(stringResource(id = R.string.app_name))
+                                        }
+                                    )
                                 }
-
-                                InstallShortcut()
-                            }
-                        }
-                    } else {
-                        val pagerState = rememberPagerState { onboardingPages.size }
-
-                        Scaffold(
-                            bottomBar = {
-                                Surface(
-                                    color = BottomAppBarDefaults.containerColor,
-                                    tonalElevation = BottomAppBarDefaults.ContainerElevation,
-                                    shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
+                            ) { innerPadding ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(innerPadding),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier
-                                            .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
-                                            .height(80.dp)
-                                            .padding(16.dp, 4.dp, 16.dp, 0.dp)
-                                    ) {
-                                        HorizontalPagerIndicator(pagerState)
+                                    FindCar()
 
-                                        Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.fillMaxWidth()
+                                    selectedDevice?.let {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        DeviceInfo(device = it)
+                                    }
+
+                                    InstallShortcut()
+                                }
+                            }
+                        } else {
+                            val pagerState = rememberPagerState { onboardingPages.size }
+
+                            Scaffold(
+                                bottomBar = {
+                                    Surface(
+                                        color = BottomAppBarDefaults.containerColor,
+                                        tonalElevation = BottomAppBarDefaults.ContainerElevation,
+                                        shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
+                                                .height(80.dp)
+                                                .padding(16.dp, 4.dp, 16.dp, 0.dp)
                                         ) {
-                                            val coroutineScope = rememberCoroutineScope()
-                                            AnimatedVisibility(visible = pagerState.currentPage > 0) {
-                                                TextButton(
+                                            HorizontalPagerIndicator(pagerState)
+
+                                            Row(
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.fillMaxWidth()
+                                            ) {
+                                                val coroutineScope = rememberCoroutineScope()
+                                                AnimatedVisibility(visible = pagerState.currentPage > 0) {
+                                                    TextButton(
+                                                        onClick = {
+                                                            coroutineScope.launch {
+                                                                pagerState.animateScrollToPage(
+                                                                    pagerState.currentPage - 1
+                                                                )
+                                                            }
+                                                        }
+                                                    ) {
+                                                        Text(stringResource(id = R.string.back))
+                                                    }
+                                                }
+
+                                                Spacer(Modifier.weight(1f))
+
+                                                Button(
                                                     onClick = {
                                                         coroutineScope.launch {
-                                                            pagerState.animateScrollToPage(
-                                                                pagerState.currentPage - 1
-                                                            )
-                                                        }
-                                                    }
-                                                ) {
-                                                    Text(stringResource(id = R.string.back))
-                                                }
-                                            }
-
-                                            Spacer(Modifier.weight(1f))
-
-                                            Button(
-                                                onClick = {
-                                                    coroutineScope.launch {
-                                                        if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                                            context.configurationsStore.edit { prefs ->
-                                                                prefs[OnboardingCompleted] = true
+                                                            if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                                                context.configurationsStore.edit { prefs ->
+                                                                    prefs[OnboardingCompleted] = true
+                                                                }
+                                                            } else {
+                                                                pagerState.animateScrollToPage(
+                                                                    pagerState.currentPage + 1
+                                                                )
                                                             }
-                                                        } else {
-                                                            pagerState.animateScrollToPage(
-                                                                pagerState.currentPage + 1
-                                                            )
                                                         }
                                                     }
-                                                }
-                                            ) {
-                                                val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                                    stringResource(id = R.string.complete_onboarding)
-                                                } else {
-                                                    stringResource(id = R.string.next)
-                                                }
-
-                                                AnimatedContent(
-                                                    targetState = text,
-                                                    label = "onboarding_next_button"
                                                 ) {
-                                                    Text(it)
+                                                    val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                                        stringResource(id = R.string.complete_onboarding)
+                                                    } else {
+                                                        stringResource(id = R.string.next)
+                                                    }
+
+                                                    AnimatedContent(
+                                                        targetState = text,
+                                                        label = "onboarding_next_button"
+                                                    ) {
+                                                        Text(it)
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
-                        ) { contentPadding ->
-                            HorizontalPager(
-                                state = pagerState,
-                                contentPadding = contentPadding,
-                                beyondBoundsPageCount = 1,
-                                userScrollEnabled = false,
-                                key = { it }
-                            ) {
-                                onboardingPages[it]()
+                            ) { contentPadding ->
+                                HorizontalPager(
+                                    state = pagerState,
+                                    contentPadding = contentPadding,
+                                    beyondBoundsPageCount = 1,
+                                    userScrollEnabled = false,
+                                    key = { it }
+                                ) {
+                                    onboardingPages[it]()
+                                }
                             }
                         }
                     }
@@ -544,10 +546,6 @@ fun getConnectedBluetoothDevices(context: Context): List<Device> {
 
 data class Config(
     val onboardingCompleted: Boolean
-)
-
-val DefaultConfigs = Config(
-    onboardingCompleted = false
 )
 
 const val Configurations = "configurations"
