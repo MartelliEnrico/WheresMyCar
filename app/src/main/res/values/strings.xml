@@ -18,4 +18,14 @@
     <string name="channel_name">Background service</string>
     <string name="notification_title">Getting Car Location</string>
     <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="complete_onboarding">Let\'s Go!</string>
+    <string name="next">Next</string>
+    <string name="app_description">You\'ll never have to guess where you left your car, ever again!</string>
+    <string name="bluetooth_permission">Bluetooth Permission</string>
+    <string name="bluetooth_description">We\'ll need bluetooth permission in order to listen for whenever your phone gets disconnected from your car</string>
+    <string name="bluetooth_rationale">Bluetooth permission is required so that the app can react whenever you exit your car</string>
+    <string name="location_permissions">Location Permissions</string>
+    <string name="location_description">We\'ll need location permissions in order to save your car location, even when the app is in the background</string>
+    <string name="permissions_granted">All good!</string>
 </resources>

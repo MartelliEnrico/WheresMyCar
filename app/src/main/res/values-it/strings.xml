@@ -8,7 +8,7 @@
     <string name="open_maps">Apri Maps</string>
     <string name="last_check">Ultimo controllo il %s</string>
     <string name="add_shortcut">Aggiungi Shortcut</string>
-    <string name="permissions_rationale">L\'applicazione necessita delle autorizzazioni per localizzazione e connessione bluetooth per poter tenere traccia di quando la tua auto si disconnette dal tuo telefono, e per tracciarne la posizione quando accade.</string>
+    <string name="permissions_rationale">L\'applicazione necessita delle autorizzazioni per localizzazione esatta per poter tenere traccia di dove hai parcheggiato l\'auto</string>
     <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%s\" nella pagina seguente.</string>
     <string name="permissions_still_required">Alcune autorizzazioni sono ancora richieste</string>
     <string name="permissions_title">Autorizzazioni Necessarie</string>
@@ -18,4 +18,14 @@
     <string name="channel_name">Servizio in background</string>
     <string name="notification_title">Ottengo la posizione dell\'auto</string>
     <string name="cancel">Annulla</string>
+    <string name="back">Back</string>
+    <string name="complete_onboarding">Andiamo!</string>
+    <string name="next">Avanti</string>
+    <string name="app_description">Non ti dimenticherai più dove hai parcheggiato la tua auto!</string>
+    <string name="bluetooth_permission">Autorizzazioni Bluetooth</string>
+    <string name="bluetooth_description">L\'applicazione necessita delle autorizzaioni bluetooth per poter tenere traccia di quando la tua auto si disconnette dal tuo telefono</string>
+    <string name="bluetooth_rationale">Le autorizzazioni bluetooth sono necessarie per poter salvare la posizione ogni volta che esci dalla macchina</string>
+    <string name="location_permissions">Autorizzazioni Localizzazione</string>
+    <string name="location_description">L\'applicazione necessita delle autorizzaioni di localizzazione per poter salvare la posizione esatta della tua auto</string>
+    <string name="permissions_granted">Tutto pronto!</string>
 </resources>

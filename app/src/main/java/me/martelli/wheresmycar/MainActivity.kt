@@ -13,30 +13,49 @@ import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,10 +68,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.content.getSystemService
@@ -60,6 +84,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
 import androidx.core.graphics.drawable.IconCompat
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.floatPreferencesKey
@@ -85,10 +110,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.io.IOException
+import kotlin.math.absoluteValue
+import kotlin.math.sign
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         if (ShortcutManagerCompat.getDynamicShortcuts(applicationContext).size == 0) {
@@ -102,60 +130,130 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = LocalContext.current
-            val coroutineScope = rememberCoroutineScope()
-            val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(initialValue = null)
+
+            val configs by remember { context.configurations }.collectAsStateWithLifecycle(
+                initialValue = DefaultConfigs
+            )
 
             WheresMyCarTheme {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(stringResource(R.string.app_name))
-                            }
+                AnimatedContent(
+                    targetState = configs.onboardingCompleted,
+                    label = "main_content"
+                ) { onboardingCompleted ->
+                    if (onboardingCompleted) {
+                        val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(
+                            initialValue = null
                         )
-                    }
-                ) { innerPadding ->
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        FindCar(
-                            selectDevice = {
-                                coroutineScope.launch {
-                                    context.dataStore.edit { preferences ->
-                                        preferences[Name] = it.name
-                                        preferences[Address] = it.address
+
+                        Scaffold(
+                            topBar = {
+                                TopAppBar(
+                                    title = {
+                                        Text(stringResource(R.string.app_name))
+                                    }
+                                )
+                            }
+                        ) { innerPadding ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                FindCar()
+
+                                selectedDevice?.let {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    DeviceInfo(device = it)
+                                }
+
+                                InstallShortcut()
+                            }
+                        }
+                    } else {
+                        val pagerState = rememberPagerState { onboardingPages.size }
+
+                        Scaffold(
+                            bottomBar = {
+                                Surface(
+                                    color = BottomAppBarDefaults.containerColor,
+                                    tonalElevation = BottomAppBarDefaults.ContainerElevation,
+                                    shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
+                                            .height(80.dp)
+                                            .padding(16.dp, 4.dp, 16.dp, 0.dp)
+                                    ) {
+                                        HorizontalPagerIndicator(pagerState)
+
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            val coroutineScope = rememberCoroutineScope()
+                                            AnimatedVisibility(visible = pagerState.currentPage > 0) {
+                                                TextButton(
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            pagerState.animateScrollToPage(
+                                                                pagerState.currentPage - 1
+                                                            )
+                                                        }
+                                                    }
+                                                ) {
+                                                    Text(stringResource(id = R.string.back))
+                                                }
+                                            }
+
+                                            Spacer(Modifier.weight(1f))
+
+                                            Button(
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                                            context.configurationsStore.edit { prefs ->
+                                                                prefs[OnboardingCompleted] = true
+                                                            }
+                                                        } else {
+                                                            pagerState.animateScrollToPage(
+                                                                pagerState.currentPage + 1
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            ) {
+                                                val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                                    stringResource(id = R.string.complete_onboarding)
+                                                } else {
+                                                    stringResource(id = R.string.next)
+                                                }
+
+                                                AnimatedContent(
+                                                    targetState = text,
+                                                    label = "onboarding_next_button"
+                                                ) {
+                                                    Text(it)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        )
-
-                        selectedDevice?.let {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            DeviceInfo(device = it)
-                        }
-
-                        InstallShortcut()
-
-                        PermissionBox(
-                            permissions = listOf(
-                                Manifest.permission.BLUETOOTH_CONNECT,
-                                Manifest.permission.ACCESS_COARSE_LOCATION,
-                                Manifest.permission.ACCESS_FINE_LOCATION
-                            ),
-                            description = stringResource(id = R.string.permissions_rationale)
-                        ) {
-                            PermissionBox(
-                                permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                                description = stringResource(
-                                    id = R.string.background_rationale,
-                                    context.packageManager.backgroundPermissionOptionLabel
-                                ),
-                                onGranted = {}
-                            )
+                        ) { contentPadding ->
+                            HorizontalPager(
+                                state = pagerState,
+                                contentPadding = contentPadding,
+                                beyondBoundsPageCount = 1,
+                                userScrollEnabled = false,
+                                key = { it }
+                            ) {
+                                onboardingPages[it]()
+                            }
                         }
                     }
                 }
@@ -164,11 +262,203 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
+fun HorizontalPagerIndicator(
+    pagerState: PagerState,
+    modifier: Modifier = Modifier,
+    activeColor: Color = LocalContentColor.current,
+    inactiveColor: Color = activeColor.copy(0.38f),
+    indicatorWidth: Dp = 8.dp,
+    indicatorHeight: Dp = indicatorWidth,
+    spacing: Dp = indicatorWidth,
+    indicatorShape: Shape = CircleShape,
+) {
+    val indicatorWidthPx = LocalDensity.current.run { indicatorWidth.roundToPx() }
+    val spacingPx = LocalDensity.current.run { spacing.roundToPx() }
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(spacing),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val indicatorModifier = Modifier
+                .size(width = indicatorWidth, height = indicatorHeight)
+                .background(color = inactiveColor, shape = indicatorShape)
+
+            repeat(pagerState.pageCount) {
+                Box(indicatorModifier)
+            }
+        }
+
+        Box(
+            Modifier
+                .offset {
+                    val position = pagerState.currentPage
+                    val offset = pagerState.currentPageOffsetFraction
+                    val next = pagerState.currentPage + offset.sign.toInt()
+                    val scrollPosition = ((next - position) * offset.absoluteValue + position)
+                        .coerceIn(
+                            0f,
+                            (pagerState.pageCount - 1)
+                                .coerceAtLeast(0)
+                                .toFloat()
+                        )
+
+                    IntOffset(
+                        x = ((spacingPx + indicatorWidthPx) * scrollPosition).toInt(),
+                        y = 0
+                    )
+                }
+                .size(width = indicatorWidth, height = indicatorHeight)
+                .then(
+                    if (pagerState.pageCount > 0) Modifier.background(
+                        color = activeColor,
+                        shape = indicatorShape,
+                    )
+                    else Modifier
+                )
+        )
+    }
+}
+
+val onboardingPages: List<@Composable () -> Unit> = listOf(
+    { Welcome() },
+    { BluetoothPermission() },
+    { LocationPermissions() },
+)
+
+@Composable
+fun Welcome() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 32.dp),
+        verticalArrangement = Arrangement.Bottom,
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.directions_car),
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = stringResource(id = R.string.app_name),
+            style = MaterialTheme.typography.displayLarge,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        Text(
+            text = stringResource(id = R.string.app_description),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+    }
+}
+
+@Composable
+fun BluetoothPermission() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 32.dp),
+        verticalArrangement = Arrangement.Bottom,
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.bluetooth_connected),
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = stringResource(id = R.string.bluetooth_permission),
+            style = MaterialTheme.typography.displayLarge,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        Text(
+            text = stringResource(id = R.string.bluetooth_description),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        PermissionBox(
+            permission = Manifest.permission.BLUETOOTH_CONNECT,
+            rationale = stringResource(id = R.string.bluetooth_rationale)
+        ) {
+            Text(
+                text = stringResource(id = R.string.permissions_granted),
+                color = Color(0xFF3A4032)
+            )
+        }
+    }
+}
+
+@Composable
+fun LocationPermissions() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 32.dp),
+        verticalArrangement = Arrangement.Bottom,
+    ) {
+        Icon(
+            imageVector = Icons.Default.LocationOn,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = stringResource(R.string.location_permissions),
+            style = MaterialTheme.typography.displayLarge,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        Text(
+            text = stringResource(R.string.location_description),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        val context = LocalContext.current
+        PermissionBox(
+            permissions = listOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ),
+            rationale = stringResource(id = R.string.permissions_rationale)
+        ) {
+            PermissionBox(
+                permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                rationale = stringResource(
+                    id = R.string.background_rationale,
+                    context.packageManager.backgroundPermissionOptionLabel
+                )
+            ) {
+                Text(
+                    text = stringResource(id = R.string.permissions_granted),
+                    color = Color(0xFF3A4032)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FindCar(modifier: Modifier = Modifier) {
     var openDialog by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     if (openDialog) {
         AlertDialog(
@@ -190,7 +480,12 @@ fun FindCar(modifier: Modifier = Modifier, selectDevice: (Device) -> Unit) {
                         ListItem(
                             modifier = Modifier.clickable {
                                 openDialog = false
-                                selectDevice(it)
+                                coroutineScope.launch {
+                                    context.savedDeviceStore.edit { preferences ->
+                                        preferences[Name] = it.name
+                                        preferences[Address] = it.address
+                                    }
+                                }
                             },
                             headlineContent = {
                                 Text(it.name)
@@ -247,6 +542,35 @@ fun getConnectedBluetoothDevices(context: Context): List<Device> {
     }
 }
 
+data class Config(
+    val onboardingCompleted: Boolean
+)
+
+val DefaultConfigs = Config(
+    onboardingCompleted = false
+)
+
+const val Configurations = "configurations"
+val OnboardingCompleted = booleanPreferencesKey("onboarding_completed")
+
+val Context.configurationsStore by preferencesDataStore(
+    name = Configurations
+)
+
+val Context.configurations: Flow<Config>
+    get() = configurationsStore.data
+        .catch { e ->
+            if (e is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw e
+            }
+        }.map { preferences ->
+            val onboardingCompleted = preferences[OnboardingCompleted] ?: false
+
+            Config(onboardingCompleted)
+        }
+
 data class Device(
     val name: String,
     val address: String,
@@ -256,19 +580,19 @@ data class Device(
     val time: Long = 0
 )
 
-const val SharedPreference = "saved_device"
+const val SavedDevice = "saved_device"
 val Name = stringPreferencesKey("name")
 val Address = stringPreferencesKey("address")
 val Latitude = floatPreferencesKey("latitude")
 val Longitude = floatPreferencesKey("longitude")
 val Time = longPreferencesKey("time")
 
-val Context.dataStore by preferencesDataStore(
-    name = SharedPreference
+val Context.savedDeviceStore by preferencesDataStore(
+    name = SavedDevice
 )
 
 val Context.savedDevice: Flow<Device?>
-    get() = dataStore.data
+    get() = savedDeviceStore.data
         .catch { e ->
             if (e is IOException) {
                 emit(emptyPreferences())
@@ -370,7 +694,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                 text = stringResource(id = R.string.last_check, datetime),
                 style = MaterialTheme.typography.labelSmall
             )
-            Spacer(modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
