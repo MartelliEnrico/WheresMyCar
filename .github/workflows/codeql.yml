@@ -67,3 +67,9 @@ jobs:
       with:
         sarif_file: sarif-results/java.sarif
         category: "/language:java-kotlin"
+
+    - name: Lint results
+      uses: actions/upload-artifact@v1
+      with:
+        name: app
+        path: app/build/reports/lint-results-debug.html
