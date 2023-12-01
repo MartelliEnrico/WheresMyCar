@@ -69,7 +69,7 @@ jobs:
         category: "/language:java-kotlin"
 
     - name: Lint results
-      uses: actions/upload-artifact@3446296876d12d4e3a0f3145a3c87e67bf0a16b5 # v1
+      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
       with:
         name: app
         path: app/build/reports/lint-results-debug.html
