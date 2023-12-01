@@ -81,7 +81,7 @@ fun PermissionBox(
                         }
                     },
                 ) {
-                    Text(text = stringResource(id = R.string.grant_permissions))
+                    Text(text = stringResource(R.string.grant_permissions))
                 }
             }
 
@@ -91,7 +91,7 @@ fun PermissionBox(
                         showRationale = false
                     },
                     title = {
-                        Text(text = stringResource(id = R.string.permissions_title))
+                        Text(text = stringResource(R.string.permissions_title))
                     },
                     text = {
                         Text(text = rationale)
@@ -103,7 +103,7 @@ fun PermissionBox(
                                 permissionState.launchMultiplePermissionRequest()
                             },
                         ) {
-                            Text(text = stringResource(id = R.string.continue_button))
+                            Text(text = stringResource(R.string.continue_button))
                         }
                     },
                     dismissButton = {
@@ -112,7 +112,7 @@ fun PermissionBox(
                                 showRationale = false
                             },
                         ) {
-                            Text(text = stringResource(id = R.string.dismiss_button))
+                            Text(text = stringResource(R.string.dismiss_button))
                         }
                     },
                 )

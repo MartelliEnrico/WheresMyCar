@@ -12,14 +12,11 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 60
     permissions:
       actions: read
       contents: read
       security-events: write
-
-    strategy:
-      fail-fast: false
 
     steps:
     - name: Checkout repository
@@ -46,7 +43,7 @@ jobs:
       uses: gradle/gradle-build-action@87a9a15658c426a54dd469d4fc7dc1a73ca9d4a6 # v2
 
     - name: Build
-      run: ./gradlew build
+      run: ./gradlew build --scan
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2

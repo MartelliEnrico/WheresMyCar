@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
                                 topBar = {
                                     TopAppBar(
                                         title = {
-                                            Text(stringResource(id = R.string.app_name))
+                                            Text(stringResource(R.string.app_name))
                                         }
                                     )
                                 }
@@ -207,7 +207,7 @@ class MainActivity : ComponentActivity() {
                                                             }
                                                         }
                                                     ) {
-                                                        Text(stringResource(id = R.string.back))
+                                                        Text(stringResource(R.string.back))
                                                     }
                                                 }
 
@@ -229,9 +229,9 @@ class MainActivity : ComponentActivity() {
                                                     }
                                                 ) {
                                                     val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                                        stringResource(id = R.string.complete_onboarding)
+                                                        stringResource(R.string.complete_onboarding)
                                                     } else {
-                                                        stringResource(id = R.string.next)
+                                                        stringResource(R.string.next)
                                                     }
 
                                                     AnimatedContent(
@@ -350,13 +350,13 @@ fun Welcome() {
         )
 
         Text(
-            text = stringResource(id = R.string.app_name),
+            text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.displayLarge,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
         Text(
-            text = stringResource(id = R.string.app_description),
+            text = stringResource(R.string.app_description),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 32.dp)
         )
@@ -380,23 +380,23 @@ fun BluetoothPermission() {
         )
 
         Text(
-            text = stringResource(id = R.string.bluetooth_permission),
+            text = stringResource(R.string.bluetooth_permission),
             style = MaterialTheme.typography.displayLarge,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
         Text(
-            text = stringResource(id = R.string.bluetooth_description),
+            text = stringResource(R.string.bluetooth_description),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
         PermissionBox(
             permission = Manifest.permission.BLUETOOTH_CONNECT,
-            rationale = stringResource(id = R.string.bluetooth_rationale)
+            rationale = stringResource(R.string.bluetooth_rationale)
         ) {
             Text(
-                text = stringResource(id = R.string.permissions_granted),
+                text = stringResource(R.string.permissions_granted),
                 color = Color(0xFF3A4032)
             )
         }
@@ -437,7 +437,7 @@ fun LocationPermissions() {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ),
-            rationale = stringResource(id = R.string.permissions_rationale)
+            rationale = stringResource(R.string.permissions_rationale)
         ) {
             PermissionBox(
                 permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
@@ -447,7 +447,7 @@ fun LocationPermissions() {
                 )
             ) {
                 Text(
-                    text = stringResource(id = R.string.permissions_granted),
+                    text = stringResource(R.string.permissions_granted),
                     color = Color(0xFF3A4032)
                 )
             }
@@ -473,7 +473,7 @@ fun FindCar(modifier: Modifier = Modifier) {
                 )
             },
             title = {
-                Text(stringResource(id = R.string.find_car))
+                Text(stringResource(R.string.find_car))
             },
             text = {
                 val connectedDevices = getConnectedBluetoothDevices(context)
@@ -497,7 +497,7 @@ fun FindCar(modifier: Modifier = Modifier) {
                             },
                             overlineContent = {
                                 if (it.connected) {
-                                    Text(stringResource(id = R.string.device_connected))
+                                    Text(stringResource(R.string.device_connected))
                                 }
                             }
                         )
@@ -531,7 +531,7 @@ fun FindCar(modifier: Modifier = Modifier) {
             }
         }
     ) {
-        Text(stringResource(id = R.string.find_car))
+        Text(stringResource(R.string.find_car))
     }
 }
 
@@ -678,7 +678,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                     .padding(horizontal = 8.dp, vertical = 5.dp),
                 onClick = { context.startActivity(intent) }
             ) {
-                Text(stringResource(id = R.string.open_maps))
+                Text(stringResource(R.string.open_maps))
             }
         }
 
@@ -689,7 +689,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                 DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
             )
             Text(
-                text = stringResource(id = R.string.last_check, datetime),
+                text = stringResource(R.string.last_check, datetime),
                 style = MaterialTheme.typography.labelSmall
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -711,7 +711,7 @@ fun InstallShortcut() {
                 ShortcutManagerCompat.requestPinShortcut(context, shortcut, successCallback.intentSender)
             }
         ) {
-            Text(stringResource(id = R.string.add_shortcut))
+            Text(stringResource(R.string.add_shortcut))
         }
     }
 }

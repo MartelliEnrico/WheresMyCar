@@ -1,16 +1,13 @@
 <resources>
-    <string name="app_name" translatable="false">Where\'s My Car</string>
     <string name="find_car">Seleziona la tua Auto</string>
     <string name="device_connected">Connesso</string>
     <string name="shortcut_short_description">Trova Auto</string>
     <string name="shortcut_long_description">Trova l\'Auto su Maps</string>
-    <string name="grant_location_permissions">Concedi autorizzazioni di localizzazione in background</string>
     <string name="open_maps">Apri Maps</string>
     <string name="last_check">Ultimo controllo il %s</string>
     <string name="add_shortcut">Aggiungi Shortcut</string>
     <string name="permissions_rationale">L\'applicazione necessita delle autorizzazioni per localizzazione esatta per poter tenere traccia di dove hai parcheggiato l\'auto</string>
     <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%s\" nella pagina seguente.</string>
-    <string name="permissions_still_required">Alcune autorizzazioni sono ancora richieste</string>
     <string name="permissions_title">Autorizzazioni Necessarie</string>
     <string name="grant_permissions">Concedi Autorizzazioni</string>
     <string name="continue_button">Continua</string>
