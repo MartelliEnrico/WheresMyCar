@@ -1,10 +1,7 @@
 package me.martelli.wheresmycar
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -21,12 +18,15 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
+typealias ButtonComposable = @Composable BoxScope.(onClick: () -> Unit) -> Unit
+
 @Composable
 fun PermissionBox(
     modifier: Modifier = Modifier,
     permission: String,
     rationale: String,
     contentAlignment: Alignment = Alignment.TopStart,
+    button: ButtonComposable = { DefaultButton(it) },
     onGranted: @Composable BoxScope.() -> Unit,
 ) {
     PermissionBox(
@@ -35,6 +35,7 @@ fun PermissionBox(
         requiredPermissions = listOf(permission),
         rationale,
         contentAlignment,
+        button,
     ) { onGranted() }
 }
 
@@ -46,6 +47,7 @@ fun PermissionBox(
     requiredPermissions: List<String> = permissions,
     rationale: String,
     contentAlignment: Alignment = Alignment.TopStart,
+    button: ButtonComposable = { DefaultButton(it) },
     onGranted: @Composable BoxScope.(List<String>) -> Unit,
 ) {
     val permissionState = rememberMultiplePermissionsState(permissions = permissions)
@@ -63,25 +65,13 @@ fun PermissionBox(
                     .map { it.permission },
             )
         } else {
-            var showRationale by remember(permissionState) {
-                mutableStateOf(false)
-            }
+            var showRationale by remember { mutableStateOf(false) }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateContentSize()
-            ) {
-                Button(
-                    onClick = {
-                        if (permissionState.shouldShowRationale) {
-                            showRationale = true
-                        } else {
-                            permissionState.launchMultiplePermissionRequest()
-                        }
-                    },
-                ) {
-                    Text(text = stringResource(R.string.grant_permissions))
+            button {
+                if (permissionState.shouldShowRationale) {
+                    showRationale = true
+                } else {
+                    permissionState.launchMultiplePermissionRequest()
                 }
             }
 
@@ -118,5 +108,12 @@ fun PermissionBox(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DefaultButton(onClick: () -> Unit) {
+    Button(onClick = onClick) {
+        Text(text = stringResource(R.string.grant_permissions))
     }
 }
