@@ -56,6 +56,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RichTooltipBox
+import androidx.compose.material3.RichTooltipState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -749,7 +751,12 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                     mapStyleOptions = mapStyleOptions
                 ),
                 uiSettings = MapUiSettings(
-                    zoomControlsEnabled = false
+                    rotationGesturesEnabled = false,
+                    scrollGesturesEnabled = false,
+                    scrollGesturesEnabledDuringRotateOrZoom = false,
+                    tiltGesturesEnabled = false,
+                    zoomControlsEnabled = false,
+                    zoomGesturesEnabled = false
                 ),
                 onMapClick = { context.startActivity(intent) }
             ) {
@@ -776,28 +783,53 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
                 text = stringResource(R.string.last_check, datetime),
                 style = MaterialTheme.typography.labelSmall
             )
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstallShortcut() {
     val context = LocalContext.current
     if (ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
-        FloatingActionButton(
-            onClick = {
-                val shortcut = buildShortcut(context, 0.0, 0.0) // not the best
-                val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
-                val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
+        val tooltipState = remember { RichTooltipState() }
+        val coroutineScope = rememberCoroutineScope()
 
-                ShortcutManagerCompat.requestPinShortcut(context, shortcut, successCallback.intentSender)
+        RichTooltipBox(
+            tooltipState = tooltipState,
+            title = {
+                Text("Add Shortcut")
+            },
+            text = {
+                Text("With this shortcut added to your home screen, you can find your car location even faster!")
+            },
+            action = {
+                TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            tooltipState.dismiss()
+                        }
+                    }
+                ) {
+                    Text("Got it!")
+                }
             }
         ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = stringResource(R.string.add_shortcut)
-            )
+            FloatingActionButton(
+                modifier = Modifier.tooltipAnchor(),
+                onClick = {
+                    val shortcut = buildShortcut(context, 0.0, 0.0) // not the best
+                    val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
+                    val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
+
+                    ShortcutManagerCompat.requestPinShortcut(context, shortcut, successCallback.intentSender)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = stringResource(R.string.add_shortcut)
+                )
+            }
         }
     }
 }
