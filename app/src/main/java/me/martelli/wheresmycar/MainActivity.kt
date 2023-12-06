@@ -27,13 +27,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -49,6 +50,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
@@ -56,13 +58,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RichTooltipBox
 import androidx.compose.material3.RichTooltipState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,14 +75,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -262,7 +262,7 @@ fun Onboarding() {
 fun AppContent(selectedDevice: Device?) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(stringResource(R.string.app_name))
                 },
@@ -318,20 +318,31 @@ fun AppContent(selectedDevice: Device?) {
         },
         floatingActionButton = {
             InstallShortcut()
-        }
+        },
+        contentWindowInsets = WindowInsets.statusBars
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(innerPadding)
         ) {
-            FindCar()
+            LocationMap(device = selectedDevice)
 
-            selectedDevice?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                DeviceInfo(device = it)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
+                shadowElevation = 2.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    selectedDevice?.let {
+                        DeviceInfo(device = it)
+                        Spacer(Modifier.height(8.dp))
+                    }
+
+                    FindCar()
+                }
             }
         }
     }
@@ -601,12 +612,10 @@ fun FindCar(modifier: Modifier = Modifier) {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) {
-            openDialog = true
-        }
+        openDialog = isGranted
     }
 
-    Button(
+    OutlinedButton(
         modifier = modifier,
         onClick = {
             when (PackageManager.PERMISSION_GRANTED) {
@@ -721,11 +730,30 @@ fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
 }
 
 @Composable
-fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
-    val context = LocalContext.current
-    val intent = remember(device) { locationIntent(device.latitude, device.longitude) }
+fun DeviceInfo(device: Device) {
+    Text(
+        text = device.name,
+        modifier = Modifier.padding(top = 16.dp),
+        style = MaterialTheme.typography.headlineMedium
+    )
 
-    val coordinates = LatLng(device.latitude, device.longitude)
+    if (device.time > 0) {
+        val datetime = DateUtils.formatDateTime(
+            LocalContext.current, device.time,
+            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
+        )
+        Text(
+            text = stringResource(R.string.last_check, datetime),
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+}
+
+@Composable
+fun LocationMap(modifier: Modifier = Modifier, device: Device?) {
+    val context = LocalContext.current
+
+    val coordinates = LatLng(device?.latitude ?: 0.0, device?.longitude ?: 0.0)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(coordinates, 16f)
     }
@@ -735,61 +763,36 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device) {
         cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(position))
     }
 
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = device.name, fontWeight = FontWeight.Bold)
-
-        Box(
-            modifier = Modifier
-                .aspectRatio(1f)
-                .padding(16.dp)
-                .fillMaxSize()
-                .clip(RoundedCornerShape(24.dp))
-        ) {
-            val mapStyleOptions = if (isSystemInDarkTheme()) {
-                MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
-            } else {
-                null
-            }
-
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(
-                    mapStyleOptions = mapStyleOptions
-                ),
-                uiSettings = MapUiSettings(
-                    rotationGesturesEnabled = false,
-                    scrollGesturesEnabled = false,
-                    scrollGesturesEnabledDuringRotateOrZoom = false,
-                    tiltGesturesEnabled = false,
-                    zoomControlsEnabled = false,
-                    zoomGesturesEnabled = false
-                ),
-                onMapClick = { context.startActivity(intent) }
-            ) {
-                Marker(state = MarkerState(position = coordinates))
-            }
-
-            Button(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(horizontal = 8.dp, vertical = 5.dp),
-                onClick = { context.startActivity(intent) }
-            ) {
-                Text(stringResource(R.string.open_maps))
-            }
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
+        val mapStyleOptions = if (isSystemInDarkTheme()) {
+            MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
+        } else {
+            null
         }
 
-        if (device.time > 0) {
-            val datetime = DateUtils.formatDateTime(
-                context,
-                device.time,
-                DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
-            )
-            Text(
-                text = stringResource(R.string.last_check, datetime),
-                style = MaterialTheme.typography.labelSmall
-            )
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(
+                mapStyleOptions = mapStyleOptions
+            ),
+            uiSettings = MapUiSettings(
+                rotationGesturesEnabled = false,
+                scrollGesturesEnabled = false,
+                scrollGesturesEnabledDuringRotateOrZoom = false,
+                tiltGesturesEnabled = false,
+                zoomControlsEnabled = false,
+                zoomGesturesEnabled = false
+            ),
+            onMapClick = {
+                device?.let {
+                    context.startActivity(locationIntent(it.latitude, it.longitude))
+                }
+            }
+        ) {
+            Marker(state = MarkerState(position = coordinates))
         }
     }
 }
