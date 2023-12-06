@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -288,7 +289,7 @@ fun AppContent(selectedDevice: Device?) {
                             button = {
                                 ErrorIconButton(onClick = it) {
                                     Icon(
-                                        imageVector = Icons.Default.LocationOn,
+                                        imageVector = Icons.Filled.LocationOn,
                                         contentDescription = null
                                     )
                                 }
@@ -304,7 +305,7 @@ fun AppContent(selectedDevice: Device?) {
                                 button = {
                                     ErrorIconButton(onClick = it) {
                                         Icon(
-                                            imageVector = Icons.Default.LocationOn,
+                                            imageVector = Icons.Filled.LocationOn,
                                             contentDescription = null
                                         )
                                     }
@@ -515,7 +516,7 @@ fun LocationPermissions() {
         verticalArrangement = Arrangement.Bottom,
     ) {
         Icon(
-            imageVector = Icons.Default.LocationOn,
+            imageVector = Icons.Filled.LocationOn,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -826,7 +827,9 @@ fun InstallShortcut() {
             }
         ) {
             FloatingActionButton(
-                modifier = Modifier.tooltipAnchor(),
+                modifier = Modifier
+                    .windowInsetsPadding(WindowInsets.navigationBars)
+                    .tooltipAnchor(),
                 onClick = {
                     val shortcut = buildShortcut(context, 0.0, 0.0) // not the best
                     val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
@@ -836,7 +839,7 @@ fun InstallShortcut() {
                 }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Settings,
+                    imageVector = Icons.Filled.Settings,
                     contentDescription = stringResource(R.string.add_shortcut)
                 )
             }
