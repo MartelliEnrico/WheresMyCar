@@ -1,31 +1,31 @@
 <resources>
     <string name="app_name" translatable="false">Where\'s My Car</string>
-    <string name="find_car">Select your Car</string>
+    <string name="find_car">Select your car</string>
     <string name="device_connected">Connected</string>
     <string name="shortcut_short_description">Find Car</string>
-    <string name="shortcut_long_description">Find your Car in Maps</string>
+    <string name="shortcut_long_description">Find your car in Maps</string>
     <string name="open_maps">Open Maps</string>
     <string name="last_check">Last checked on %s</string>
-    <string name="add_shortcut">Add Shortcut</string>
+    <string name="add_shortcut">Add shortcut</string>
     <string name="shortcut_tooltip">With this shortcut added to your home screen, you can find your car location even faster!</string>
     <string name="tooltip_complete">Got it!</string>
     <string name="permissions_rationale">The application needs location and bluetooth permissions to be able to listen for whenever your phone gets disconnected from your car, and to track the location when it happens.</string>
     <string name="background_rationale">The application needs to be able to track your location while the app is in the background, so that it can save your car location more easily. Please select the option \"%s\" in the following screen.</string>
-    <string name="permissions_title">Permissions Required</string>
-    <string name="grant_permissions">Grant Permissions</string>
+    <string name="permissions_title">Permissions required</string>
+    <string name="grant_permissions">Grant permissions</string>
     <string name="continue_button">Continue</string>
     <string name="dismiss_button">Dismiss</string>
     <string name="channel_name">Background service</string>
-    <string name="notification_title">Getting Car Location</string>
+    <string name="notification_title">Getting car location</string>
     <string name="cancel">Cancel</string>
     <string name="back">Back</string>
-    <string name="complete_onboarding">Let\'s Go!</string>
+    <string name="complete_onboarding">Let\'s go!</string>
     <string name="next">Next</string>
     <string name="app_description">You\'ll never have to guess where you left your car, ever again!</string>
-    <string name="bluetooth_permission">Bluetooth Permission</string>
+    <string name="bluetooth_permission">Bluetooth permission</string>
     <string name="bluetooth_description">We\'ll need bluetooth permission in order to listen for whenever your phone gets disconnected from your car</string>
     <string name="bluetooth_rationale">Bluetooth permission is required so that the app can react whenever you exit your car</string>
-    <string name="location_permissions">Location Permissions</string>
+    <string name="location_permissions">Location permissions</string>
     <string name="location_description">We\'ll need location permissions in order to save your car location, even when the app is in the background</string>
     <string name="permissions_granted">All good!</string>
 </resources>

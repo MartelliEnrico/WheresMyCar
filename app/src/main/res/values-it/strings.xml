@@ -1,17 +1,17 @@
 <resources>
-    <string name="find_car">Seleziona la tua Auto</string>
+    <string name="find_car">Seleziona la tua auto</string>
     <string name="device_connected">Connesso</string>
     <string name="shortcut_short_description">Trova Auto</string>
-    <string name="shortcut_long_description">Trova l\'Auto su Maps</string>
+    <string name="shortcut_long_description">Trova l\'auto su Maps</string>
     <string name="open_maps">Apri Maps</string>
     <string name="last_check">Ultimo controllo il %s</string>
-    <string name="add_shortcut">Aggiungi Shortcut</string>
+    <string name="add_shortcut">Aggiungi shortcut</string>
     <string name="shortcut_tooltip">Aggiungendo questo shortcut alla tua home screen, potrai trovare la posizione della tua auto ancora più velocemente!</string>
     <string name="tooltip_complete">Capito!</string>
     <string name="permissions_rationale">L\'applicazione necessita delle autorizzazioni per localizzazione esatta per poter tenere traccia di dove hai parcheggiato l\'auto</string>
     <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%s\" nella pagina seguente.</string>
-    <string name="permissions_title">Autorizzazioni Necessarie</string>
-    <string name="grant_permissions">Concedi Autorizzazioni</string>
+    <string name="permissions_title">Autorizzazioni necessarie</string>
+    <string name="grant_permissions">Concedi autorizzazioni</string>
     <string name="continue_button">Continua</string>
     <string name="dismiss_button">Annulla</string>
     <string name="channel_name">Servizio in background</string>
@@ -21,10 +21,10 @@
     <string name="complete_onboarding">Andiamo!</string>
     <string name="next">Avanti</string>
     <string name="app_description">Non ti dimenticherai più dove hai parcheggiato la tua auto!</string>
-    <string name="bluetooth_permission">Autorizzazioni Bluetooth</string>
+    <string name="bluetooth_permission">Autorizzazioni bluetooth</string>
     <string name="bluetooth_description">L\'applicazione necessita delle autorizzaioni bluetooth per poter tenere traccia di quando la tua auto si disconnette dal tuo telefono</string>
     <string name="bluetooth_rationale">Le autorizzazioni bluetooth sono necessarie per poter salvare la posizione ogni volta che esci dalla macchina</string>
-    <string name="location_permissions">Autorizzazioni Localizzazione</string>
+    <string name="location_permissions">Autorizzazioni localizzazione</string>
     <string name="location_description">L\'applicazione necessita delle autorizzaioni di localizzazione per poter salvare la posizione esatta della tua auto</string>
     <string name="permissions_granted">Tutto pronto!</string>
 </resources>
