@@ -58,7 +58,7 @@ jobs:
         base64 -d keystore-b64.txt > app/$KEYSTORE_PATH
 
     - name: Build
-      run: ./gradlew build --scan
+      run: ./gradlew assembleRelease --scan
 
     - name: Cleanup
       if: always()
@@ -89,7 +89,7 @@ jobs:
         sarif_file: sarif-results/java.sarif
         category: "/language:java-kotlin"
 
-    - name: Lint results
+    - name: Upload lint results
       uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
       with:
         name: lint-results
@@ -99,4 +99,4 @@ jobs:
       uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
       with:
         name: android-build-outputs
-        path: app/build/outputs
+        path: app/build/outputs/apk/release/app-release.apk
