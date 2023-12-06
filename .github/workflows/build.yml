@@ -1,0 +1,121 @@
+name: "CI"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2
+      with:
+        languages: "java-kotlin"
+        queries: security-and-quality
+
+    - name: Set Up JDK
+      uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4
+      with:
+        distribution: zulu
+        java-version: 21
+
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@87a9a15658c426a54dd469d4fc7dc1a73ca9d4a6 # v2
+
+    - name: Create secrets.properties
+      env:
+        MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+      run: echo MAPS_API_KEY="$MAPS_API_KEY" > ./secrets.properties
+
+    - name: Build
+      run: ./gradlew build --scan
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2
+      with:
+        upload: false
+        output: sarif-results
+
+    - name: Filter SARIF
+      uses: advanced-security/filter-sarif@f3b8118a9349d88f7b1c0c488476411145b6270d # v1
+      with:
+        patterns: |
+          -.gradle/**
+        input: sarif-results/java.sarif
+        output: sarif-results/java.sarif
+
+    - name: Upload SARIF
+      uses: github/codeql-action/upload-sarif@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2
+      with:
+        sarif_file: sarif-results/java.sarif
+        category: "/language:java-kotlin"
+
+    - name: Lint results
+      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+      with:
+        name: app
+        path: app/build/reports/lint-results-debug.html
+
+  android:
+    needs: [analyze]
+    name: Android app
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Set Up JDK
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@87a9a15658c426a54dd469d4fc7dc1a73ca9d4a6 # v2
+
+      - name: Create secrets.properties
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: |
+          echo storePassword=$KEYSTORE_PASSWORD >> ./secrets.properties
+          echo keyPassword=$KEYSTORE_PASSWORD >> ./secrets.properties
+          echo keyAlias=$KEYSTORE_ALIAS >> ./secrets.properties
+          echo storeFile=$KEYSTORE_PATH >> ./secrets.properties
+          echo MAPS_API_KEY=$MAPS_API_KEY >> ./secrets.properties
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+        run: |
+          echo $KEYSTORE_BASE64 > keystore-b64.txt
+          base64 -d keystore-b64.txt > $KEYSTORE_PATH
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload Release APK
+        if: always()
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+        with:
+          name: android-build-outputs
+          path: app/build/outputs
