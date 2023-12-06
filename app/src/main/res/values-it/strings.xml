@@ -6,6 +6,8 @@
     <string name="open_maps">Apri Maps</string>
     <string name="last_check">Ultimo controllo il %s</string>
     <string name="add_shortcut">Aggiungi Shortcut</string>
+    <string name="shortcut_tooltip">Aggiungendo questo shortcut alla tua home screen, potrai trovare la posizione della tua auto ancora più velocemente!</string>
+    <string name="tooltip_complete">Capito!</string>
     <string name="permissions_rationale">L\'applicazione necessita delle autorizzazioni per localizzazione esatta per poter tenere traccia di dove hai parcheggiato l\'auto</string>
     <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%s\" nella pagina seguente.</string>
     <string name="permissions_title">Autorizzazioni Necessarie</string>

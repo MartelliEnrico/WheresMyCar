@@ -30,6 +30,7 @@ maps = "com.google.maps.android:maps-compose:4.3.0"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.32.0"
 play-services-location = "com.google.android.gms:play-services-location:21.0.1"
 work-runtime = "androidx.work:work-runtime-ktx:2.9.0"
+splashscreen = "androidx.core:core-splashscreen:1.0.1"
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }

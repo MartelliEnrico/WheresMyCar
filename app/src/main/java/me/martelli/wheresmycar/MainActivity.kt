@@ -90,6 +90,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -110,10 +111,8 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.io.IOException
 import kotlin.math.absoluteValue
@@ -122,31 +121,43 @@ import kotlin.math.sign
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
+
+        var keepSplashscreen = true
+        installSplashScreen().setKeepOnScreenCondition { keepSplashscreen }
+
         super.onCreate(savedInstanceState)
 
-        if (ShortcutManagerCompat.getDynamicShortcuts(applicationContext).size == 0) {
-            if (ShortcutManagerCompat.getShortcuts(applicationContext, FLAG_MATCH_PINNED).size > 0) {
-                val device = runBlocking { applicationContext.savedDevice.first() }
-                device?.let {
-                    pushDynamicShortcut(applicationContext, it.latitude, it.longitude)
-                }
-            }
-        }
-
         setContent {
-            val context = LocalContext.current
-            val configs by remember { context.configurations }.collectAsStateWithLifecycle(
-                initialValue = null
-            )
+            WheresMyCarTheme {
+                val context = LocalContext.current
+                val configs by remember { context.configurations }.collectAsStateWithLifecycle(
+                    initialValue = null
+                )
+                val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(
+                    initialValue = null
+                )
 
-            configs?.let {
-                WheresMyCarTheme {
+                LaunchedEffect(configs) {
+                    keepSplashscreen = configs == null
+                }
+
+                LaunchedEffect(selectedDevice) {
+                    selectedDevice?.let {
+                        if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
+                            if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
+                                pushDynamicShortcut(context, it.latitude, it.longitude)
+                            }
+                        }
+                    }
+                }
+
+                configs?.let {
                     AnimatedContent(
                         targetState = it.onboardingCompleted,
                         label = "main_content"
                     ) { onboardingCompleted ->
                         if (onboardingCompleted) {
-                            AppContent()
+                            AppContent(selectedDevice)
                         } else {
                             Onboarding()
                         }
@@ -155,129 +166,141 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
-    @Composable
-    @OptIn(ExperimentalFoundationApi::class)
-    private fun Onboarding() {
-        val context = LocalContext.current
-        val pagerState = rememberPagerState { onboardingPages.size }
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+fun Onboarding() {
+    val context = LocalContext.current
+    val pagerState = rememberPagerState { onboardingPages.size }
 
-        Scaffold(
-            bottomBar = {
-                Surface(
-                    color = BottomAppBarDefaults.containerColor,
-                    tonalElevation = BottomAppBarDefaults.ContainerElevation,
-                    shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
+    Scaffold(
+        bottomBar = {
+            Surface(
+                color = BottomAppBarDefaults.containerColor,
+                tonalElevation = BottomAppBarDefaults.ContainerElevation,
+                shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
+                        .height(80.dp)
+                        .padding(16.dp, 4.dp, 16.dp, 0.dp)
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
-                            .height(80.dp)
-                            .padding(16.dp, 4.dp, 16.dp, 0.dp)
+                    HorizontalPagerIndicator(pagerState)
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        HorizontalPagerIndicator(pagerState)
-
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            val coroutineScope = rememberCoroutineScope()
-                            AnimatedVisibility(visible = pagerState.currentPage > 0) {
-                                TextButton(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(
-                                                pagerState.currentPage - 1
-                                            )
-                                        }
-                                    }
-                                ) {
-                                    Text(stringResource(R.string.back))
-                                }
-                            }
-
-                            Spacer(Modifier.weight(1f))
-
-                            Button(
+                        val coroutineScope = rememberCoroutineScope()
+                        AnimatedVisibility(visible = pagerState.currentPage > 0) {
+                            TextButton(
                                 onClick = {
                                     coroutineScope.launch {
-                                        if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                            context.configurationsStore.edit { prefs ->
-                                                prefs[OnboardingCompleted] = true
-                                            }
-                                        } else {
-                                            pagerState.animateScrollToPage(
-                                                pagerState.currentPage + 1
-                                            )
-                                        }
+                                        pagerState.animateScrollToPage(
+                                            pagerState.currentPage - 1
+                                        )
                                     }
                                 }
                             ) {
-                                val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                    stringResource(R.string.complete_onboarding)
-                                } else {
-                                    stringResource(R.string.next)
-                                }
+                                Text(stringResource(R.string.back))
+                            }
+                        }
 
-                                AnimatedContent(
-                                    targetState = text,
-                                    label = "onboarding_next_button"
-                                ) {
-                                    Text(it)
+                        Spacer(Modifier.weight(1f))
+
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                        context.configurationsStore.edit { prefs ->
+                                            prefs[OnboardingCompleted] = true
+                                        }
+                                    } else {
+                                        pagerState.animateScrollToPage(
+                                            pagerState.currentPage + 1
+                                        )
+                                    }
                                 }
+                            }
+                        ) {
+                            val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                stringResource(R.string.complete_onboarding)
+                            } else {
+                                stringResource(R.string.next)
+                            }
+
+                            AnimatedContent(
+                                targetState = text,
+                                label = "onboarding_next_button"
+                            ) {
+                                Text(it)
                             }
                         }
                     }
                 }
             }
-        ) { contentPadding ->
-            HorizontalPager(
-                state = pagerState,
-                contentPadding = contentPadding,
-                beyondBoundsPageCount = 1,
-                userScrollEnabled = false,
-                key = { it }
-            ) {
-                onboardingPages[it]()
-            }
+        }
+    ) { contentPadding ->
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = contentPadding,
+            beyondBoundsPageCount = 1,
+            userScrollEnabled = false,
+            key = { it }
+        ) {
+            onboardingPages[it]()
         }
     }
+}
 
-    @Composable
-    @OptIn(ExperimentalMaterial3Api::class)
-    private fun AppContent() {
-        val context = LocalContext.current
-        val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(
-            initialValue = null
-        )
-
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(stringResource(R.string.app_name))
-                    },
-                    actions = {
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun AppContent(selectedDevice: Device?) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.app_name))
+                },
+                actions = {
+                    PermissionBox(
+                        permission = Manifest.permission.BLUETOOTH_CONNECT,
+                        rationale = stringResource(R.string.bluetooth_rationale),
+                        button = {
+                            ErrorIconButton(onClick = it) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.bluetooth_connected),
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    ) {
                         PermissionBox(
-                            permission = Manifest.permission.BLUETOOTH_CONNECT,
-                            rationale = stringResource(R.string.bluetooth_rationale),
+                            permissions = listOf(
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ),
+                            rationale = stringResource(R.string.permissions_rationale),
                             button = {
                                 ErrorIconButton(onClick = it) {
                                     Icon(
-                                        painter = painterResource(id = R.drawable.bluetooth_connected),
+                                        imageVector = Icons.Default.LocationOn,
                                         contentDescription = null
                                     )
                                 }
                             }
                         ) {
+                            val context = LocalContext.current
                             PermissionBox(
-                                permissions = listOf(
-                                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                                    Manifest.permission.ACCESS_FINE_LOCATION
+                                permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                                rationale = stringResource(
+                                    id = R.string.background_rationale,
+                                    context.packageManager.backgroundPermissionOptionLabel
                                 ),
-                                rationale = stringResource(R.string.permissions_rationale),
                                 button = {
                                     ErrorIconButton(onClick = it) {
                                         Icon(
@@ -285,46 +308,30 @@ class MainActivity : ComponentActivity() {
                                             contentDescription = null
                                         )
                                     }
-                                }
-                            ) {
-                                PermissionBox(
-                                    permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                                    rationale = stringResource(
-                                        id = R.string.background_rationale,
-                                        context.packageManager.backgroundPermissionOptionLabel
-                                    ),
-                                    button = {
-                                        ErrorIconButton(onClick = it) {
-                                            Icon(
-                                                imageVector = Icons.Default.LocationOn,
-                                                contentDescription = null
-                                            )
-                                        }
-                                    },
-                                    onGranted = {}
-                                )
-                            }
+                                },
+                                onGranted = {}
+                            )
                         }
                     }
-                )
-            },
-            floatingActionButton = {
-                InstallShortcut()
-            }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                FindCar()
-
-                selectedDevice?.let {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    DeviceInfo(device = it)
                 }
+            )
+        },
+        floatingActionButton = {
+            InstallShortcut()
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            FindCar()
+
+            selectedDevice?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                DeviceInfo(device = it)
             }
         }
     }
@@ -798,10 +805,10 @@ fun InstallShortcut() {
         RichTooltipBox(
             tooltipState = tooltipState,
             title = {
-                Text("Add Shortcut")
+                Text(stringResource(R.string.add_shortcut))
             },
             text = {
-                Text("With this shortcut added to your home screen, you can find your car location even faster!")
+                Text(stringResource(R.string.shortcut_tooltip))
             },
             action = {
                 TextButton(
@@ -811,7 +818,7 @@ fun InstallShortcut() {
                         }
                     }
                 ) {
-                    Text("Got it!")
+                    Text(stringResource(R.string.tooltip_complete))
                 }
             }
         ) {
