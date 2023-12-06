@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  analyze:
-    name: Analyze
+  build:
+    name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -38,8 +38,24 @@ jobs:
 
     - name: Create secrets.properties
       env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
         MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
-      run: echo MAPS_API_KEY="$MAPS_API_KEY" > ./secrets.properties
+      run: |
+        echo storePassword=$KEYSTORE_PASSWORD >> ./secrets.properties
+        echo keyPassword=$KEYSTORE_PASSWORD >> ./secrets.properties
+        echo keyAlias=$KEYSTORE_ALIAS >> ./secrets.properties
+        echo storeFile=$KEYSTORE_PATH >> ./secrets.properties
+        echo MAPS_API_KEY=$MAPS_API_KEY >> ./secrets.properties
+
+    - name: Decode keystore
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+      run: |
+        echo $KEYSTORE_BASE64 > keystore-b64.txt
+        base64 -d keystore-b64.txt > $KEYSTORE_PATH
 
     - name: Build
       run: ./gradlew build --scan
@@ -67,55 +83,12 @@ jobs:
     - name: Lint results
       uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
       with:
-        name: app
+        name: lint-results
         path: app/build/reports/lint-results-debug.html
 
-  android:
-    needs: [analyze]
-    name: Android app
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-
-      - name: Set Up JDK
-        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4
-        with:
-          distribution: zulu
-          java-version: 21
-
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@87a9a15658c426a54dd469d4fc7dc1a73ca9d4a6 # v2
-
-      - name: Create secrets.properties
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
-        run: |
-          echo storePassword=$KEYSTORE_PASSWORD >> ./secrets.properties
-          echo keyPassword=$KEYSTORE_PASSWORD >> ./secrets.properties
-          echo keyAlias=$KEYSTORE_ALIAS >> ./secrets.properties
-          echo storeFile=$KEYSTORE_PATH >> ./secrets.properties
-          echo MAPS_API_KEY=$MAPS_API_KEY >> ./secrets.properties
-
-      - name: Decode keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-        run: |
-          echo $KEYSTORE_BASE64 > keystore-b64.txt
-          base64 -d keystore-b64.txt > $KEYSTORE_PATH
-
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
-
-      - name: Upload Release APK
-        if: always()
-        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
-        with:
-          name: android-build-outputs
-          path: app/build/outputs
+    - name: Upload Release APK
+      if: always()
+      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+      with:
+        name: android-build-outputs
+        path: app/build/outputs
