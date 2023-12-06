@@ -45,8 +45,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AppShortcut
+import androidx.compose.material.icons.filled.BluetoothConnected
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BottomAppBarDefaults
@@ -80,7 +82,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -274,7 +275,7 @@ fun AppContent(selectedDevice: Device?) {
                         button = {
                             ErrorIconButton(onClick = it) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.bluetooth_connected),
+                                    imageVector = Icons.Filled.BluetoothConnected,
                                     contentDescription = null
                                 )
                             }
@@ -446,7 +447,7 @@ fun Welcome() {
         verticalArrangement = Arrangement.Bottom,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.directions_car),
+            imageVector = Icons.Filled.DirectionsCar,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -476,7 +477,7 @@ fun BluetoothPermission() {
         verticalArrangement = Arrangement.Bottom,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.bluetooth_connected),
+            imageVector = Icons.Filled.BluetoothConnected,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -571,7 +572,7 @@ fun FindCar(modifier: Modifier = Modifier) {
             confirmButton = {},
             icon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.directions_car),
+                    imageVector = Icons.Filled.DirectionsCar,
                     contentDescription = null
                 )
             },
@@ -755,13 +756,13 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device?) {
     val context = LocalContext.current
 
     val coordinates = LatLng(device?.latitude ?: 0.0, device?.longitude ?: 0.0)
+    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 16.5f)
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(coordinates, 16f)
+        position = cameraPosition
     }
 
-    LaunchedEffect(coordinates) {
-        val position = CameraPosition.fromLatLngZoom(coordinates, 16f)
-        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(position))
+    LaunchedEffect(cameraPosition) {
+        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
 
     Box(
@@ -839,7 +840,7 @@ fun InstallShortcut() {
                 }
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Settings,
+                    imageVector = Icons.Filled.AppShortcut,
                     contentDescription = stringResource(R.string.add_shortcut)
                 )
             }
