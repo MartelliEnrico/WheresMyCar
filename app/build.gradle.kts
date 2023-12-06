@@ -1,8 +1,12 @@
+import com.google.android.libraries.mapsplatform.secrets_gradle_plugin.loadPropertiesFile
+
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.maps.secrets)
 }
+
+val secrets = rootProject.loadPropertiesFile("secrets.properties")
 
 android {
     namespace = "me.martelli.wheresmycar"
@@ -21,28 +25,44 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = secrets["keyAlias"] as String
+            keyPassword = secrets["keyPassword"] as String
+            storeFile = file(secrets["storeFile"] as String)
+            storePassword = secrets["storePassword"] as String
+        }
+    }
+
     buildTypes {
         release {
+            isDebuggable = false
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs["release"]
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.6"
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -51,7 +71,7 @@ android {
 }
 
 secrets {
-    propertiesFileName = "local.properties"
+    propertiesFileName = "secrets.properties"
 }
 
 dependencies {
