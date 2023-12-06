@@ -90,7 +90,6 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.work.runtime)
     implementation(libs.splashscreen)
-    implementation(libs.material.icons.extended)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
