@@ -28,4 +28,6 @@
     <string name="location_permissions">Location permissions</string>
     <string name="location_description">We\'ll need location permissions in order to save your car location, even when the app is in the background</string>
     <string name="permissions_granted">All good!</string>
+    <string name="empty_state_title">Nothing to see here</string>
+    <string name="empty_state_body">To get started, select you car from your saved bluetooth devices, and then just drive! The app will show the last parking location here.</string>
 </resources>

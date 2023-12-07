@@ -81,6 +81,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -317,7 +318,9 @@ fun AppContent(selectedDevice: Device?) {
             )
         },
         floatingActionButton = {
-            InstallShortcut()
+            if (selectedDevice?.hasLocation == true) {
+                InstallShortcut(device = selectedDevice)
+            }
         },
         contentWindowInsets = WindowInsets.statusBars
     ) { innerPadding ->
@@ -326,7 +329,11 @@ fun AppContent(selectedDevice: Device?) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            LocationMap(device = selectedDevice)
+            if (selectedDevice?.hasLocation == true) {
+                LocationMap(device = selectedDevice)
+            } else {
+                EmptyState()
+            }
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -334,7 +341,7 @@ fun AppContent(selectedDevice: Device?) {
                 shadowElevation = 2.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
                     selectedDevice?.let {
                         DeviceInfo(device = it)
@@ -588,6 +595,9 @@ fun FindCar(modifier: Modifier = Modifier) {
                                     context.savedDeviceStore.edit { preferences ->
                                         preferences[Name] = it.name
                                         preferences[Address] = it.address
+                                        preferences[Latitude] = 0.0f
+                                        preferences[Longitude] = 0.0f
+                                        preferences[Time] = 0
                                     }
                                 }
                             },
@@ -676,7 +686,9 @@ data class Device(
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val time: Long = 0
-)
+) {
+    val hasLocation = latitude != 0.0 && longitude != 0.0
+}
 
 const val SavedDevice = "saved_device"
 val Name = stringPreferencesKey("name")
@@ -750,56 +762,77 @@ fun DeviceInfo(device: Device) {
 }
 
 @Composable
-fun LocationMap(modifier: Modifier = Modifier, device: Device?) {
+fun EmptyState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(color = MaterialTheme.colorScheme.secondaryContainer)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Filled.LocationOn,
+            contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.empty_state_title),
+            style = MaterialTheme.typography.displaySmall
+        )
+        Text(
+            text = stringResource(R.string.empty_state_body),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+fun LocationMap(modifier: Modifier = Modifier, device: Device) {
     val context = LocalContext.current
 
-    val coordinates = LatLng(device?.latitude ?: 0.0, device?.longitude ?: 0.0)
+    val coordinates = LatLng(device.latitude, device.longitude)
+    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 16.5f)
+
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(coordinates, 16f)
+        position = cameraPosition
     }
 
-    LaunchedEffect(coordinates) {
-        val position = CameraPosition.fromLatLngZoom(coordinates, 16f)
-        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(position))
+    LaunchedEffect(cameraPosition) {
+        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        val mapStyleOptions = if (isSystemInDarkTheme()) {
-            MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
-        } else {
-            null
-        }
-
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            properties = MapProperties(
-                mapStyleOptions = mapStyleOptions
-            ),
-            uiSettings = MapUiSettings(
-                rotationGesturesEnabled = false,
-                scrollGesturesEnabled = false,
-                scrollGesturesEnabledDuringRotateOrZoom = false,
-                tiltGesturesEnabled = false,
-                zoomControlsEnabled = false,
-                zoomGesturesEnabled = false
-            ),
-            onMapClick = {
-                device?.let {
-                    context.startActivity(locationIntent(it.latitude, it.longitude))
-                }
+    GoogleMap(
+        modifier = modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        properties = MapProperties(
+            mapStyleOptions = if (isSystemInDarkTheme()) {
+                MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
+            } else {
+                null
             }
-        ) {
-            Marker(state = MarkerState(position = coordinates))
+        ),
+        uiSettings = MapUiSettings(
+            rotationGesturesEnabled = false,
+            scrollGesturesEnabled = false,
+            scrollGesturesEnabledDuringRotateOrZoom = false,
+            tiltGesturesEnabled = false,
+            zoomControlsEnabled = false,
+            zoomGesturesEnabled = false
+        ),
+        onMapClick = {
+            context.startActivity(locationIntent(device.latitude, device.longitude))
         }
+    ) {
+        Marker(state = MarkerState(position = coordinates))
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InstallShortcut() {
+fun InstallShortcut(device: Device) {
     val context = LocalContext.current
     if (ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
         val tooltipState = remember { RichTooltipState() }
@@ -830,7 +863,7 @@ fun InstallShortcut() {
                     .windowInsetsPadding(WindowInsets.navigationBars)
                     .tooltipAnchor(),
                 onClick = {
-                    val shortcut = buildShortcut(context, 0.0, 0.0) // not the best
+                    val shortcut = buildShortcut(context, device.latitude, device.longitude)
                     val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
                     val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
 
