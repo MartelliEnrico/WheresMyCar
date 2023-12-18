@@ -90,13 +90,13 @@ jobs:
         category: "/language:java-kotlin"
 
     - name: Upload lint results
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
       with:
         name: lint-results
         path: app/build/reports/lint-results-debug.html
 
     - name: Upload Release APK
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3
+      uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
       with:
         name: android-build-outputs
         path: app/build/outputs/apk/release/app-release.apk
