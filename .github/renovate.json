@@ -7,7 +7,8 @@
       ],
       "matchUpdateTypes": [
         "minor",
-        "patch"
+        "patch",
+        "digest"
       ],
       "automerge": true,
       "labels": [
