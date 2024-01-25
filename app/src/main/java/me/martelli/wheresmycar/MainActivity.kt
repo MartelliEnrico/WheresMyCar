@@ -726,15 +726,23 @@ val Context.savedDevice: Flow<Device?>
 const val ShortcutId = "navigate"
 
 fun locationIntent(latitude: Double, longitude: Double) =
-    Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}"))
+    Intent(
+        Intent.ACTION_VIEW,
+        Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}")
+    )
 
 fun buildShortcut(context: Context, latitude: Double, longitude: Double) =
     ShortcutInfoCompat.Builder(context, ShortcutId)
-    .setShortLabel(context.getString(R.string.shortcut_short_description))
-    .setLongLabel(context.getString(R.string.shortcut_long_description))
-    .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
-    .setIntent(locationIntent(latitude, longitude))
-    .build()
+        .setShortLabel(context.getString(R.string.shortcut_short_description))
+        .setLongLabel(context.getString(R.string.shortcut_long_description))
+        .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
+        .addCapabilityBinding(
+            "actions.intent.OPEN_APP_FEATURE",
+            "feature",
+            context.resources.getStringArray(R.array.shortcut_feature_name).asList()
+        )
+        .setIntent(locationIntent(latitude, longitude))
+        .build()
 
 fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
     val shortcut = buildShortcut(context, latitude, longitude)

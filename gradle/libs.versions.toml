@@ -31,6 +31,7 @@ accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.34.0
 play-services-location = "com.google.android.gms:play-services-location:21.1.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.9.0"
 splashscreen = "androidx.core:core-splashscreen:1.0.1"
+core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }

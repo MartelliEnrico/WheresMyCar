@@ -3,6 +3,9 @@
     <string name="device_connected">Connesso</string>
     <string name="shortcut_short_description">Trova Auto</string>
     <string name="shortcut_long_description">Trova l\'auto su Maps</string>
+    <string-array name="shortcut_feature_name">
+        <item>posizione auto</item>
+    </string-array>
     <string name="open_maps">Apri Maps</string>
     <string name="last_check">Ultimo controllo il %s</string>
     <string name="add_shortcut">Aggiungi shortcut</string>
