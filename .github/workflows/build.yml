@@ -34,7 +34,7 @@ jobs:
         java-version: 21
 
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@b6816cf21e7970b88479bb3c57d9cbe5cdd4b949 # v3
+      uses: gradle/actions/setup-gradle@aff52e5be96935327d77c5529075184377dc4371 # v3
       with:
         dependency-graph: generate-and-submit
         build-scan-publish: true
