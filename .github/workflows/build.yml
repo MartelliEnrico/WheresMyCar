@@ -34,7 +34,12 @@ jobs:
         java-version: 21
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@4a8703fa348fe99fdb9d2ac233732f7dccea5437 # v3
+      uses: gradle/actions/setup-gradle@b6816cf21e7970b88479bb3c57d9cbe5cdd4b949 # v3
+      with:
+        dependency-graph: generate-and-submit
+        build-scan-publish: true
+        build-scan-terms-of-service-url: "https://gradle.com/terms-of-service"
+        build-scan-terms-of-service-agree: "yes"
 
     - name: Create secrets.properties
       env:
@@ -58,7 +63,7 @@ jobs:
         base64 -d keystore-b64.txt > app/$KEYSTORE_PATH
 
     - name: Build
-      run: ./gradlew build --scan
+      run: ./gradlew build
 
     - name: Cleanup
       if: always()
