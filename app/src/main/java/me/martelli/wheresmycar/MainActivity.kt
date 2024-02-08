@@ -59,12 +59,13 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RichTooltipBox
-import androidx.compose.material3.RichTooltipState
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -84,7 +85,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupPositionProvider
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.content.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -114,6 +119,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.martelli.wheresmycar.ui.theme.DarkGreen
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.io.IOException
 import kotlin.math.absoluteValue
@@ -355,7 +361,6 @@ fun AppContent(selectedDevice: Device?) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ErrorIconButton(onClick: () -> Unit, content: @Composable () -> Unit) {
     Box {
@@ -506,7 +511,7 @@ fun BluetoothPermission() {
         ) {
             Text(
                 text = stringResource(R.string.permissions_granted),
-                color = Color(0xFF3A4032)
+                color = DarkGreen
             )
         }
     }
@@ -557,7 +562,7 @@ fun LocationPermissions() {
             ) {
                 Text(
                     text = stringResource(R.string.permissions_granted),
-                    color = Color(0xFF3A4032)
+                    color = DarkGreen
                 )
             }
         }
@@ -843,33 +848,64 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
 fun InstallShortcut(device: Device) {
     val context = LocalContext.current
     if (ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
-        val tooltipState = remember { RichTooltipState() }
-        val coroutineScope = rememberCoroutineScope()
+        val tooltipState = rememberTooltipState(isPersistent = true)
+        val scope = rememberCoroutineScope()
 
-        RichTooltipBox(
-            tooltipState = tooltipState,
-            title = {
-                Text(stringResource(R.string.add_shortcut))
-            },
-            text = {
-                Text(stringResource(R.string.shortcut_tooltip))
-            },
-            action = {
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            tooltipState.dismiss()
+        val tooltipAnchorSpacing = with(LocalDensity.current) {
+            8.dp.roundToPx()
+        }
+        val positionProvider = remember(tooltipAnchorSpacing) {
+            object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize
+                ): IntOffset {
+                    var x = anchorBounds.left
+                    // Try to shift it to the left of the anchor
+                    // if the tooltip would collide with the right side of the screen
+                    if (x + popupContentSize.width > windowSize.width) {
+                        x = anchorBounds.right - popupContentSize.width
+                        // Center if it'll also collide with the left side of the screen
+                        if (x < 0)
+                            x = anchorBounds.right +
+                                    (anchorBounds.width - popupContentSize.width) / 2
+                    }
+
+                    // Tooltip prefers to be above the anchor,
+                    // but if this causes the tooltip to overlap with the anchor
+                    // then we place it below the anchor
+                    var y = anchorBounds.top - popupContentSize.height - tooltipAnchorSpacing
+                    if (y < 0)
+                        y = anchorBounds.bottom + tooltipAnchorSpacing
+                    return IntOffset(x, y)
+                }
+            }
+        }
+
+        TooltipBox(
+            positionProvider = positionProvider,
+            tooltip = {
+                RichTooltip(
+                    title = { Text(stringResource(R.string.add_shortcut)) },
+                    action = {
+                        TextButton(
+                            onClick = {
+                                scope.launch { tooltipState.dismiss() }
+                            }
+                        ) {
+                            Text(stringResource(R.string.tooltip_complete))
                         }
                     }
                 ) {
-                    Text(stringResource(R.string.tooltip_complete))
+                    Text(stringResource(R.string.shortcut_tooltip))
                 }
-            }
+            },
+            state = tooltipState
         ) {
             FloatingActionButton(
-                modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.navigationBars)
-                    .tooltipAnchor(),
+                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
                 onClick = {
                     val shortcut = buildShortcut(context, device.latitude, device.longitude)
                     val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
