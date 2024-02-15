@@ -25,7 +25,7 @@ jobs:
       uses: gradle/wrapper-validation-action@699bb18358f12c5b78b37bb0111d3a0e2276e0e2 # v2
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@e675ced7a7522a761fc9c8eb26682c8b27c42b2b # v3
+      uses: github/codeql-action/init@379614612a29c9e28f31f39a59013eb8012a51f0 # v3
       with:
         languages: "java-kotlin"
         queries: security-and-quality
@@ -78,7 +78,7 @@ jobs:
         rm app/$KEYSTORE_PATH
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@e675ced7a7522a761fc9c8eb26682c8b27c42b2b # v3
+      uses: github/codeql-action/analyze@379614612a29c9e28f31f39a59013eb8012a51f0 # v3
       with:
         upload: false
         output: sarif-results
@@ -92,7 +92,7 @@ jobs:
         output: sarif-results/java.sarif
 
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@e675ced7a7522a761fc9c8eb26682c8b27c42b2b # v3
+      uses: github/codeql-action/upload-sarif@379614612a29c9e28f31f39a59013eb8012a51f0 # v3
       with:
         sarif_file: sarif-results/java.sarif
         category: "/language:java-kotlin"
