@@ -26,7 +26,7 @@ ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
 lifecycle-runtime-compose = "androidx.lifecycle:lifecycle-runtime-compose:2.7.0"
 datastore-preferences = "androidx.datastore:datastore-preferences:1.1.0"
-maps = "com.google.maps.android:maps-compose:4.4.0"
+maps = "com.google.maps.android:maps-compose:4.4.1"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.34.0"
 play-services-location = "com.google.android.gms:play-services-location:21.2.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.9.0"
