@@ -19,25 +19,25 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      uses: actions/checkout@v4
 
     - name: Validate gradle wrapper
-      uses: gradle/wrapper-validation-action@216d1ad2b3710bf005dc39237337b9673fd8fcd5 # v3
+      uses: gradle/actions/wrapper-validation@v3
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@d39d31e687223d841ef683f52467bd88e9b21c14 # v3
+      uses: github/codeql-action/init@v3
       with:
         languages: "java-kotlin"
         queries: security-and-quality
 
     - name: Set Up JDK
-      uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4
+      uses: actions/setup-java@v4
       with:
         distribution: zulu
         java-version: 21
 
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@db19848a5fa7950289d3668fb053140cf3028d43 # v3
+      uses: gradle/actions/setup-gradle@v3
       with:
         dependency-graph: generate-and-submit
         build-scan-publish: true
@@ -78,13 +78,13 @@ jobs:
         rm app/$KEYSTORE_PATH
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@d39d31e687223d841ef683f52467bd88e9b21c14 # v3
+      uses: github/codeql-action/analyze@v3
       with:
         upload: false
         output: sarif-results
 
     - name: Filter SARIF
-      uses: advanced-security/filter-sarif@f3b8118a9349d88f7b1c0c488476411145b6270d # v1
+      uses: advanced-security/filter-sarif@v1
       with:
         patterns: |
           -.gradle/**
@@ -92,19 +92,19 @@ jobs:
         output: sarif-results/java.sarif
 
     - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@d39d31e687223d841ef683f52467bd88e9b21c14 # v3
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: sarif-results/java.sarif
         category: "/language:java-kotlin"
 
     - name: Upload lint results
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+      uses: actions/upload-artifact@v4
       with:
         name: lint-results
         path: app/build/reports/lint-results-debug.html
 
     - name: Upload Release APK
-      uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+      uses: actions/upload-artifact@v4
       with:
         name: android-build-outputs
         path: app/build/outputs/apk/release/app-release.apk
