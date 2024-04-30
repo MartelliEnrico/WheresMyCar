@@ -2,6 +2,7 @@ import com.google.android.libraries.mapsplatform.secrets_gradle_plugin.loadPrope
 
 plugins {
     alias(libs.plugins.com.android.application)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.maps.secrets)
 }
@@ -26,23 +27,27 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = secrets["keyAlias"] as String
-            keyPassword = secrets["keyPassword"] as String
-            storeFile = file(secrets["storeFile"] as String)
-            storePassword = secrets["storePassword"] as String
+        if (!secrets.isEmpty) {
+            create("release") {
+                keyAlias = secrets["keyAlias"] as String
+                keyPassword = secrets["keyPassword"] as String
+                storeFile = file(secrets["storeFile"] as String)
+                storePassword = secrets["storePassword"] as String
+            }
         }
     }
 
     buildTypes {
-        release {
-            isDebuggable = false
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs["release"]
+        if (!secrets.isEmpty) {
+            release {
+                isDebuggable = false
+                isMinifyEnabled = false
+                proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+                )
+                signingConfig = signingConfigs["release"]
+            }
         }
     }
 
@@ -59,8 +64,8 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.12"
+    composeCompiler {
+        enableStrongSkippingMode = true
     }
 
     packaging {

@@ -31,7 +31,7 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
         }
 
         val channelName = applicationContext.getString(R.string.channel_name)
-        val notificationChannel = NotificationChannel(NotificationChannelId, channelName, NotificationManager.IMPORTANCE_LOW)
+        val notificationChannel = NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_LOW)
         val notificationManager = applicationContext.getSystemService<NotificationManager>()
         notificationManager!!.createNotificationChannel(notificationChannel)
 
@@ -39,7 +39,7 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
         val cancel = applicationContext.getString(R.string.cancel)
         val intent = WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
 
-        val notification = NotificationCompat.Builder(applicationContext, NotificationId)
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setContentTitle(title)
             .setTicker(title)
             .setContentText(title)
@@ -48,7 +48,7 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
             .addAction(android.R.drawable.ic_delete, cancel, intent)
             .build()
 
-        setForeground(ForegroundInfo(NotificationIdNumber, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION))
+        setForeground(ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION))
 
         val location = getLocation()
 
@@ -66,9 +66,9 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
     @RequiresPermission(anyOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])
     private suspend fun getLocation() = suspendCancellableCoroutine { cont ->
         val locationClient = LocationServices.getFusedLocationProviderClient(applicationContext)
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, IntervalMillis)
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, INTERVAL_MILLIS)
             .setWaitForAccurateLocation(true)
-            .setMaxUpdateDelayMillis(IntervalMillis)
+            .setMaxUpdateDelayMillis(INTERVAL_MILLIS)
             .build()
 
         val locationCallback = object : LocationCallback() {
@@ -88,9 +88,8 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
     }
 
     companion object {
-        const val NotificationChannelId = "location"
-        const val NotificationId = "location"
-        const val NotificationIdNumber = 1
-        const val IntervalMillis = 100L
+        const val CHANNEL_ID = "location"
+        const val NOTIFICATION_ID = 1
+        const val INTERVAL_MILLIS = 100L
     }
 }
