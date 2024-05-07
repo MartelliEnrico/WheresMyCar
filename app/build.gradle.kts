@@ -2,6 +2,7 @@ import com.google.android.libraries.mapsplatform.secrets_gradle_plugin.loadPrope
 
 plugins {
     alias(libs.plugins.com.android.application)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.maps.secrets)
 }
@@ -59,13 +60,16 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.12"
+    composeCompiler {
+        enableStrongSkippingMode = true
     }
 
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+        jniLibs {
+            excludes += "**/libdatastore_shared_counter.so"
         }
     }
 }

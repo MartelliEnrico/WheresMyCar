@@ -122,6 +122,7 @@ import kotlinx.coroutines.launch
 import me.martelli.wheresmycar.ui.theme.DarkGreen
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.io.IOException
+import java.lang.reflect.Method
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
@@ -652,12 +653,12 @@ fun FindCar(modifier: Modifier = Modifier) {
 
 @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
 fun getConnectedBluetoothDevices(context: Context): List<Device> {
-    val isConnected = BluetoothDevice::class.java.getMethod("isConnected")
-
     return context.getSystemService<BluetoothManager>()?.adapter?.bondedDevices?.filterNotNull().orEmpty().map {
-        Device(it.name, it.address, isConnected.invoke(it) as Boolean)
+        Device(it.name, it.address, IsConnected.invoke(it) as Boolean)
     }
 }
+
+val IsConnected: Method = BluetoothDevice::class.java.getMethod("isConnected")
 
 data class Config(
     val onboardingCompleted: Boolean
