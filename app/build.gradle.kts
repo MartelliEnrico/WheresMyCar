@@ -27,27 +27,23 @@ android {
     }
 
     signingConfigs {
-        if (!secrets.isEmpty) {
-            create("release") {
-                keyAlias = secrets["keyAlias"] as String
-                keyPassword = secrets["keyPassword"] as String
-                storeFile = file(secrets["storeFile"] as String)
-                storePassword = secrets["storePassword"] as String
-            }
+        create("release") {
+            keyAlias = secrets["keyAlias"] as String
+            keyPassword = secrets["keyPassword"] as String
+            storeFile = file(secrets["storeFile"] as String)
+            storePassword = secrets["storePassword"] as String
         }
     }
 
     buildTypes {
-        if (!secrets.isEmpty) {
-            release {
-                isDebuggable = false
-                isMinifyEnabled = false
-                proguardFiles(
-                    getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro"
-                )
-                signingConfig = signingConfigs["release"]
-            }
+        release {
+            isDebuggable = false
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs["release"]
         }
     }
 
@@ -61,7 +57,6 @@ android {
     }
 
     buildFeatures {
-        buildConfig = true
         compose = true
     }
 
