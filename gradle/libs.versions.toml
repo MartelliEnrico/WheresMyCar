@@ -1,13 +1,13 @@
 [versions]
-agp = "8.3.2"
+agp = "8.4.0"
 kotlin = "2.0.0-RC2"
-core-ktx = "1.13.0"
+core-ktx = "1.13.1"
 junit = "4.13.2"
 androidx-test-ext-junit = "1.1.5"
 espresso-core = "3.5.1"
 lifecycle-runtime-ktx = "2.7.0"
 activity-compose = "1.9.0"
-compose-bom = "2024.04.01"
+compose-bom = "2024.05.00"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -25,8 +25,8 @@ ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 material3 = { group = "androidx.compose.material3", name = "material3" }
 lifecycle-runtime-compose = "androidx.lifecycle:lifecycle-runtime-compose:2.7.0"
-datastore-preferences = "androidx.datastore:datastore-preferences:1.1.0"
-maps = "com.google.maps.android:maps-compose:4.4.1"
+datastore-preferences = "androidx.datastore:datastore-preferences:1.1.1"
+maps = "com.google.maps.android:maps-compose:4.4.2"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.34.0"
 play-services-location = "com.google.android.gms:play-services-location:21.2.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.9.0"
