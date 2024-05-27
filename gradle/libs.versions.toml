@@ -27,7 +27,7 @@ splashscreen = "androidx.core:core-splashscreen:1.0.1"
 core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
 
 [plugins]
-com-android-application = "com.android.application:8.4.0"
+com-android-application = "com.android.application:8.4.1"
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
