@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.0.0"
-lifecycle-runtime = "2.8.0"
+lifecycle-runtime = "2.8.1"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.13.1"
@@ -21,7 +21,7 @@ material3 = { module = "androidx.compose.material3:material3" }
 datastore-preferences = "androidx.datastore:datastore-preferences:1.1.1"
 maps = "com.google.maps.android:maps-compose:5.0.1"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.34.0"
-play-services-location = "com.google.android.gms:play-services-location:21.2.0"
+play-services-location = "com.google.android.gms:play-services-location:21.3.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.9.0"
 splashscreen = "androidx.core:core-splashscreen:1.0.1"
 core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
