@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.0.0"
-lifecycle-runtime = "2.8.1"
+lifecycle-runtime = "2.8.2"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.13.1"
@@ -10,7 +10,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.5.1"
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle-runtime" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime" }
 activity-compose = "androidx.activity:activity-compose:1.9.0"
-compose-bom = "androidx.compose:compose-bom:2024.05.00"
+compose-bom = "androidx.compose:compose-bom:2024.06.00"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -27,7 +27,7 @@ splashscreen = "androidx.core:core-splashscreen:1.0.1"
 core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
 
 [plugins]
-com-android-application = "com.android.application:8.4.1"
+com-android-application = "com.android.application:8.5.0"
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
