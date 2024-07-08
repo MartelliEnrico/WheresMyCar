@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.0.0"
-lifecycle-runtime = "2.8.2"
+lifecycle-runtime = "2.8.3"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.13.1"
