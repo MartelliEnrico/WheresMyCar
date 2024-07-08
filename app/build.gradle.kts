@@ -1,10 +1,11 @@
 import com.google.android.libraries.mapsplatform.secrets_gradle_plugin.loadPropertiesFile
 
 plugins {
-    alias(libs.plugins.com.android.application)
-    alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.maps.secrets)
+    alias(libs.plugins.baselineprofile)
 }
 
 val secrets = rootProject.loadPropertiesFile("secrets.properties")
@@ -26,7 +27,10 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        resourceConfigurations += listOf("en", "it")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -43,13 +47,13 @@ android {
 
     buildTypes {
         release {
-            isDebuggable = false
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            signingConfig = signingConfigs["release"]
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs["release"]
         }
     }
 
@@ -92,12 +96,14 @@ dependencies {
     implementation(libs.work.runtime)
     implementation(libs.splashscreen)
     implementation(libs.core.google.shortcuts)
+    implementation(libs.androidx.profileinstaller)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
+    "baselineProfile"(project(":baselineprofile"))
 
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)

@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         google()
@@ -16,3 +18,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Where's My Car"
 include(":app")
+include(":baselineprofile")
