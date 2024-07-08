@@ -21,7 +21,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -108,13 +107,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -337,9 +334,14 @@ fun AppContent(selectedDevice: Device?) {
                 .padding(innerPadding)
         ) {
             if (selectedDevice?.hasLocation == true) {
-                LocationMap(device = selectedDevice)
+                LocationMap(
+                    modifier = Modifier.fillMaxSize(),
+                    device = selectedDevice
+                )
             } else {
-                EmptyState()
+                EmptyState(
+                    modifier = Modifier.fillMaxSize()
+                )
             }
 
             Surface(
@@ -779,7 +781,6 @@ fun DeviceInfo(device: Device) {
 fun EmptyState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .fillMaxSize()
             .background(color = MaterialTheme.colorScheme.secondaryContainer)
             .padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -818,16 +819,11 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
 
+    val markerState = rememberMarkerState(position = coordinates)
+
     GoogleMap(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier,
         cameraPositionState = cameraPositionState,
-        properties = MapProperties(
-            mapStyleOptions = if (isSystemInDarkTheme()) {
-                MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark)
-            } else {
-                null
-            }
-        ),
         uiSettings = MapUiSettings(
             rotationGesturesEnabled = false,
             scrollGesturesEnabled = false,
@@ -840,7 +836,7 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
             context.startActivity(locationIntent(device.latitude, device.longitude))
         }
     ) {
-        Marker(state = MarkerState(position = coordinates))
+        Marker(state = markerState)
     }
 }
 

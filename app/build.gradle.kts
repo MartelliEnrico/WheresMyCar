@@ -9,14 +9,20 @@ plugins {
 
 val secrets = rootProject.loadPropertiesFile("secrets.properties")
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 android {
     namespace = "me.martelli.wheresmycar"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "me.martelli.wheresmycar"
         minSdk = 33
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -45,15 +51,6 @@ android {
             )
             signingConfig = signingConfigs["release"]
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     buildFeatures {
