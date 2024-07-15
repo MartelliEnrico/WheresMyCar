@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.0"
+agp = "8.5.1"
 kotlin = "2.0.0"
 lifecycle-runtime = "2.8.3"
 
@@ -20,7 +20,7 @@ ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 material3 = { module = "androidx.compose.material3:material3" }
 datastore-preferences = "androidx.datastore:datastore-preferences:1.1.1"
-maps = "com.google.maps.android:maps-compose:6.0.0"
+maps = "com.google.maps.android:maps-compose:6.1.0"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.34.0"
 play-services-location = "com.google.android.gms:play-services-location:21.3.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.9.0"
