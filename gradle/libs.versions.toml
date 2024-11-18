@@ -11,7 +11,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.6.1"
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle-runtime" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime" }
 activity-compose = "androidx.activity:activity-compose:1.9.3"
-compose-bom = "androidx.compose:compose-bom:2024.10.01"
+compose-bom = "androidx.compose:compose-bom:2024.11.00"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
