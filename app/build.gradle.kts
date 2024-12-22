@@ -10,15 +10,15 @@ plugins {
 
 val secrets = rootProject.loadPropertiesFile("secrets.properties")
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
 android {
     namespace = "me.martelli.wheresmycar"
     compileSdk = 35
+    buildToolsVersion = "35.0.0"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 
     defaultConfig {
         applicationId = "me.martelli.wheresmycar"
@@ -30,10 +30,6 @@ android {
         resourceConfigurations += listOf("en", "it")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        vectorDrawables {
-            useSupportLibrary = true
-        }
     }
 
     signingConfigs {
@@ -46,6 +42,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             isMinifyEnabled = true
             signingConfig = signingConfigs["release"]
@@ -57,12 +56,16 @@ android {
         }
     }
 
+    baselineProfile {
+        dexLayoutOptimization = true
+    }
+
     buildFeatures {
         compose = true
     }
 
-    composeCompiler {
-        enableStrongSkippingMode = true
+    kotlinOptions {
+        jvmTarget = "17"
     }
 
     packaging {

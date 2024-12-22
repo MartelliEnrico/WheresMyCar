@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
@@ -18,7 +19,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +46,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
@@ -55,6 +56,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -107,6 +109,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
@@ -125,7 +128,7 @@ import kotlin.math.sign
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        if (Build.VERSION.SDK_INT < 35) enableEdgeToEdge()
 
         var keepSplashscreen = true
         installSplashScreen().setKeepOnScreenCondition { keepSplashscreen }
@@ -174,7 +177,6 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
 fun Onboarding() {
     val context = LocalContext.current
     val pagerState = rememberPagerState { onboardingPages.size }
@@ -253,7 +255,6 @@ fun Onboarding() {
         HorizontalPager(
             state = pagerState,
             contentPadding = contentPadding,
-            beyondBoundsPageCount = 1,
             userScrollEnabled = false,
             key = { it }
         ) {
@@ -381,7 +382,6 @@ fun ErrorIconButton(onClick: () -> Unit, content: @Composable () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HorizontalPagerIndicator(
     pagerState: PagerState,
@@ -619,7 +619,10 @@ fun FindCar(modifier: Modifier = Modifier) {
                                 if (it.connected) {
                                     Text(stringResource(R.string.device_connected))
                                 }
-                            }
+                            },
+                            colors = ListItemDefaults.colors(
+                                containerColor = AlertDialogDefaults.containerColor,
+                            )
                         )
                     }
                 }
@@ -834,7 +837,8 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         ),
         onMapClick = {
             context.startActivity(locationIntent(device.latitude, device.longitude))
-        }
+        },
+        mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
     ) {
         Marker(state = markerState)
     }
