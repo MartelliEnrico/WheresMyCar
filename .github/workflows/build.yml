@@ -47,7 +47,6 @@ jobs:
     - name: Create secrets.properties
       env:
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
         KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
         MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
       run: |
