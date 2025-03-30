@@ -12,8 +12,8 @@ val secrets = rootProject.loadPropertiesFile("secrets.properties")
 
 android {
     namespace = "me.martelli.wheresmycar"
-    compileSdk = 35
-    buildToolsVersion = "35.0.0"
+    compileSdk = 36
+    buildToolsVersion = "36.0.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -23,11 +23,9 @@ android {
     defaultConfig {
         applicationId = "me.martelli.wheresmycar"
         minSdk = 33
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
-        resourceConfigurations += listOf("en", "it")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -58,6 +56,11 @@ android {
 
     baselineProfile {
         dexLayoutOptimization = true
+    }
+
+    androidResources {
+        @Suppress("UnstableApiUsage")
+        localeFilters += setOf("en", "it")
     }
 
     buildFeatures {

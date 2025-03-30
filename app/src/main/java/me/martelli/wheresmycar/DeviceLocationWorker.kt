@@ -52,13 +52,15 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
 
         val location = getLocation()
 
-        applicationContext.savedDeviceStore.edit { preferences ->
+        val prefs = applicationContext.savedDeviceStore.edit { preferences ->
             preferences[Latitude] = location.latitude.toFloat()
             preferences[Longitude] = location.longitude.toFloat()
             preferences[Time] = location.time
         }
 
-        pushDynamicShortcut(applicationContext, location.latitude, location.longitude)
+        val name = prefs[DisplayName]!!
+
+        pushDynamicShortcut(applicationContext, name, location.latitude, location.longitude)
 
         return Result.success()
     }

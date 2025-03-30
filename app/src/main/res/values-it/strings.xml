@@ -1,7 +1,8 @@
 <resources>
     <string name="find_car">Seleziona la tua auto</string>
+    <string name="change_name">Cambia nome</string>
     <string name="device_connected">Connesso</string>
-    <string name="shortcut_short_description">Trova Auto</string>
+    <string name="shortcut_short_description">Trova %s</string>
     <string name="shortcut_long_description">Trova l\'auto su Maps</string>
     <string-array name="shortcut_feature_name">
         <item>posizione auto</item>
@@ -20,6 +21,7 @@
     <string name="channel_name">Servizio in background</string>
     <string name="notification_title">Ottengo la posizione dell\'auto</string>
     <string name="cancel">Annulla</string>
+    <string name="ok">OK</string>
     <string name="back">Back</string>
     <string name="complete_onboarding">Andiamo!</string>
     <string name="next">Avanti</string>

@@ -7,8 +7,6 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
@@ -43,6 +41,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
@@ -65,6 +64,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
@@ -77,12 +77,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -97,6 +102,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -114,8 +120,9 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.compose.rememberMarkerState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -128,10 +135,10 @@ import kotlin.math.sign
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Build.VERSION.SDK_INT < 35) enableEdgeToEdge()
+        val keepSplashscreen = MutableStateFlow(true)
+        installSplashScreen().setKeepOnScreenCondition { keepSplashscreen.value }
 
-        var keepSplashscreen = true
-        installSplashScreen().setKeepOnScreenCondition { keepSplashscreen }
+        enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
 
@@ -146,14 +153,14 @@ class MainActivity : ComponentActivity() {
                 )
 
                 LaunchedEffect(configs) {
-                    keepSplashscreen = configs == null
+                    keepSplashscreen.value = configs == null
                 }
 
                 LaunchedEffect(selectedDevice) {
                     selectedDevice?.let {
                         if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
                             if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
-                                pushDynamicShortcut(context, it.latitude, it.longitude)
+                                pushDynamicShortcut(context, it.displayName, it.latitude, it.longitude)
                             }
                         }
                     }
@@ -351,17 +358,186 @@ fun AppContent(selectedDevice: Device?) {
                 shadowElevation = 2.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
+                    modifier = Modifier.padding(vertical = 16.dp)
                 ) {
-                    selectedDevice?.let {
-                        DeviceInfo(device = it)
-                        Spacer(Modifier.height(8.dp))
-                    }
-
-                    FindCar()
+                    selectedDevice?.let { DeviceInfo(device = it) }
+                    FindCar(modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
         }
+    }
+}
+
+@Composable
+fun DeviceInfo(device: Device) {
+    var openDialog by rememberSaveable { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
+
+    var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(device.displayName, selection = TextRange(device.displayName.length)))
+    }
+
+    if (openDialog) {
+        AlertDialog(
+            onDismissRequest = { openDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        openDialog = false
+                        coroutineScope.launch {
+                            val displayName = name.text.ifBlank { device.name }
+                            context.savedDeviceStore.edit { preferences ->
+                                preferences[DisplayName] = displayName
+                            }
+
+                            pushDynamicShortcut(context, displayName, device.latitude, device.longitude)
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { openDialog = false }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+            title = {
+                Text(stringResource(R.string.change_name))
+            },
+            text = {
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    modifier = Modifier.focusRequester(focusRequester),
+                    placeholder = {
+                        Text(text = device.name)
+                    },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                )
+
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
+            }
+        )
+    }
+
+    ListItem(
+        headlineContent = {
+            Text(
+                text = device.displayName,
+                style = MaterialTheme.typography.headlineMedium
+            )
+        },
+        supportingContent = if (device.time > 0) ({
+            val datetime = DateUtils.formatDateTime(
+                context, device.time, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
+            )
+            Text(
+                text = stringResource(R.string.last_check, datetime)
+            )
+        }) else null,
+        trailingContent = {
+            FilledTonalIconButton(
+                onClick = { openDialog = true },
+                content = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.drive_file_rename),
+                        contentDescription = null
+                    )
+                }
+            )
+        }
+    )
+}
+
+@Composable
+fun FindCar(modifier: Modifier = Modifier) {
+    var openDialog by rememberSaveable { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    if (openDialog) {
+        AlertDialog(
+            onDismissRequest = { openDialog = false },
+            confirmButton = {},
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.directions_car),
+                    contentDescription = null
+                )
+            },
+            title = {
+                Text(stringResource(R.string.find_car))
+            },
+            text = {
+                val connectedDevices = getConnectedBluetoothDevices(context)
+                LazyColumn {
+                    items(connectedDevices, key = { it.address }) {
+                        ListItem(
+                            modifier = Modifier.clickable {
+                                openDialog = false
+                                coroutineScope.launch {
+                                    context.savedDeviceStore.edit { preferences ->
+                                        preferences[Name] = it.name
+                                        preferences[Address] = it.address
+                                        preferences[Latitude] = 0.0f
+                                        preferences[Longitude] = 0.0f
+                                        preferences[Time] = 0
+                                    }
+                                }
+                            },
+                            headlineContent = {
+                                Text(it.name)
+                            },
+                            supportingContent = {
+                                Text(it.address)
+                            },
+                            overlineContent = {
+                                if (it.connected) {
+                                    Text(stringResource(R.string.device_connected))
+                                }
+                            },
+                            colors = ListItemDefaults.colors(
+                                containerColor = AlertDialogDefaults.containerColor,
+                            )
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        openDialog = isGranted
+    }
+
+    OutlinedButton(
+        modifier = modifier,
+        onClick = {
+            when (PackageManager.PERMISSION_GRANTED) {
+                checkSelfPermission(
+                    context,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) -> {
+                    openDialog = true
+                }
+                else -> {
+                    launcher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+                }
+            }
+        }
+    ) {
+        Text(stringResource(R.string.find_car))
     }
 }
 
@@ -572,90 +748,6 @@ fun LocationPermissions() {
     }
 }
 
-@Composable
-fun FindCar(modifier: Modifier = Modifier) {
-    var openDialog by rememberSaveable { mutableStateOf(false) }
-
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    if (openDialog) {
-        AlertDialog(
-            onDismissRequest = { openDialog = false },
-            confirmButton = {},
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.directions_car),
-                    contentDescription = null
-                )
-            },
-            title = {
-                Text(stringResource(R.string.find_car))
-            },
-            text = {
-                val connectedDevices = getConnectedBluetoothDevices(context)
-                LazyColumn {
-                    items(connectedDevices, key = { it.address }) {
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                openDialog = false
-                                coroutineScope.launch {
-                                    context.savedDeviceStore.edit { preferences ->
-                                        preferences[Name] = it.name
-                                        preferences[Address] = it.address
-                                        preferences[Latitude] = 0.0f
-                                        preferences[Longitude] = 0.0f
-                                        preferences[Time] = 0
-                                    }
-                                }
-                            },
-                            headlineContent = {
-                                Text(it.name)
-                            },
-                            supportingContent = {
-                                Text(it.address)
-                            },
-                            overlineContent = {
-                                if (it.connected) {
-                                    Text(stringResource(R.string.device_connected))
-                                }
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = AlertDialogDefaults.containerColor,
-                            )
-                        )
-                    }
-                }
-            }
-        )
-    }
-
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        openDialog = isGranted
-    }
-
-    OutlinedButton(
-        modifier = modifier,
-        onClick = {
-            when (PackageManager.PERMISSION_GRANTED) {
-                checkSelfPermission(
-                    context,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) -> {
-                    openDialog = true
-                }
-                else -> {
-                    launcher.launch(Manifest.permission.BLUETOOTH_CONNECT)
-                }
-            }
-        }
-    ) {
-        Text(stringResource(R.string.find_car))
-    }
-}
-
 @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
 fun getConnectedBluetoothDevices(context: Context): List<Device> {
     return context.getSystemService<BluetoothManager>()?.adapter?.bondedDevices?.filterNotNull().orEmpty().map {
@@ -696,7 +788,8 @@ data class Device(
     val connected: Boolean = false,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val time: Long = 0
+    val time: Long = 0,
+    val displayName: String = name
 ) {
     val hasLocation = latitude != 0.0 && longitude != 0.0
 }
@@ -707,6 +800,7 @@ val Address = stringPreferencesKey("address")
 val Latitude = floatPreferencesKey("latitude")
 val Longitude = floatPreferencesKey("longitude")
 val Time = longPreferencesKey("time")
+val DisplayName = stringPreferencesKey("display_name")
 
 val Context.savedDeviceStore by preferencesDataStore(
     name = SavedDevice
@@ -726,9 +820,18 @@ val Context.savedDevice: Flow<Device?>
             val latitude = preferences[Latitude] ?: 0.0
             val longitude = preferences[Longitude] ?: 0.0
             val time = preferences[Time] ?: 0
+            val displayName = preferences[DisplayName]
 
             if (name != null && address != null) {
-                Device(name, address, false, latitude.toDouble(), longitude.toDouble(), time)
+                Device(
+                    name,
+                    address,
+                    false,
+                    latitude.toDouble(),
+                    longitude.toDouble(),
+                    time,
+                    displayName ?: name
+                )
             } else {
                 null
             }
@@ -739,14 +842,14 @@ const val ShortcutId = "navigate"
 fun locationIntent(latitude: Double, longitude: Double) =
     Intent(
         Intent.ACTION_VIEW,
-        Uri.parse("https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}")
+        "https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}".toUri()
     )
 
-fun buildShortcut(context: Context, latitude: Double, longitude: Double) =
+fun buildShortcut(context: Context, name: String, latitude: Double, longitude: Double) =
     ShortcutInfoCompat.Builder(context, ShortcutId)
-        .setShortLabel(context.getString(R.string.shortcut_short_description))
+        .setShortLabel(context.getString(R.string.shortcut_short_description, name))
         .setLongLabel(context.getString(R.string.shortcut_long_description))
-        .setIcon(IconCompat.createWithResource(context, R.drawable.directions_car))
+        .setIcon(IconCompat.createWithResource(context, R.drawable.location_pin))
         .addCapabilityBinding(
             "actions.intent.OPEN_APP_FEATURE",
             "feature",
@@ -755,29 +858,9 @@ fun buildShortcut(context: Context, latitude: Double, longitude: Double) =
         .setIntent(locationIntent(latitude, longitude))
         .build()
 
-fun pushDynamicShortcut(context: Context, latitude: Double, longitude: Double) {
-    val shortcut = buildShortcut(context, latitude, longitude)
+fun pushDynamicShortcut(context: Context, name: String, latitude: Double, longitude: Double) {
+    val shortcut = buildShortcut(context, name, latitude, longitude)
     ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
-}
-
-@Composable
-fun DeviceInfo(device: Device) {
-    Text(
-        text = device.name,
-        modifier = Modifier.padding(top = 16.dp),
-        style = MaterialTheme.typography.headlineMedium
-    )
-
-    if (device.time > 0) {
-        val datetime = DateUtils.formatDateTime(
-            LocalContext.current, device.time,
-            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
-        )
-        Text(
-            text = stringResource(R.string.last_check, datetime),
-            style = MaterialTheme.typography.labelMedium
-        )
-    }
 }
 
 @Composable
@@ -822,7 +905,7 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
 
-    val markerState = rememberMarkerState(position = coordinates)
+    val markerState = rememberUpdatedMarkerState(position = coordinates)
 
     GoogleMap(
         modifier = modifier,
@@ -908,7 +991,7 @@ fun InstallShortcut(device: Device) {
             FloatingActionButton(
                 modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
                 onClick = {
-                    val shortcut = buildShortcut(context, device.latitude, device.longitude)
+                    val shortcut = buildShortcut(context, device.displayName, device.latitude, device.longitude)
                     val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
                     val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
 
