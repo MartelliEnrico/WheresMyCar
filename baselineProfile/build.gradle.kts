@@ -8,8 +8,8 @@ plugins {
 
 android {
     namespace = "me.martelli.wheresmycar.baselineprofile"
-    compileSdk = 35
-    buildToolsVersion = "35.0.0"
+    compileSdk = 36
+    buildToolsVersion = "36.0.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -18,7 +18,7 @@ android {
 
     defaultConfig {
         minSdk = 33
-        targetSdk = 35
+        targetSdk = 36
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -32,10 +32,10 @@ android {
     // This code creates the gradle managed device used to generate baseline profiles.
     // To use GMD please invoke generation through the command line:
     // ./gradlew :app:generateBaselineProfile
-    testOptions.managedDevices.devices {
-        create<ManagedVirtualDevice>("pixel9proApi35") {
+    testOptions.managedDevices.allDevices {
+        create<ManagedVirtualDevice>("pixel9proApi36") {
             device = "Pixel 9 Pro"
-            apiLevel = 35
+            apiLevel = 36
             systemImageSource = "google"
         }
     }
@@ -44,7 +44,7 @@ android {
 // This is the configuration block for the Baseline Profile plugin.
 // You can specify to run the generators on a managed devices or connected devices.
 baselineProfile {
-    managedDevices += "pixel9proApi35"
+    managedDevices += "pixel9proApi36"
     useConnectedDevices = false
 }
 
