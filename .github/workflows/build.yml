@@ -86,6 +86,7 @@ jobs:
       with:
         patterns: |
           -.gradle/**
+          -**/generated/**
         input: sarif-results/java.sarif
         output: sarif-results/java.sarif
 
