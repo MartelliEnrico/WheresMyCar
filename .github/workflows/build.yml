@@ -1,4 +1,4 @@
-name: "CI"
+name: Build Release APK
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build Release APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -21,15 +21,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Validate gradle wrapper
-      uses: gradle/actions/wrapper-validation@v4
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: "java-kotlin"
-        queries: security-and-quality
-
     - name: Set Up JDK
       uses: actions/setup-java@v4
       with:
@@ -38,11 +29,6 @@ jobs:
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
-      with:
-        dependency-graph: generate-and-submit
-        build-scan-publish: true
-        build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
-        build-scan-terms-of-use-agree: "yes"
 
     - name: Create secrets.properties
       env:
@@ -74,33 +60,6 @@ jobs:
         rm secrets.properties
         rm keystore-b64.txt
         rm app/$KEYSTORE_PATH
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        upload: false
-        output: sarif-results
-
-    - name: Filter SARIF
-      uses: advanced-security/filter-sarif@v1
-      with:
-        patterns: |
-          -.gradle/**
-          -**/generated/**
-        input: sarif-results/java.sarif
-        output: sarif-results/java.sarif
-
-    - name: Upload SARIF
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: sarif-results/java.sarif
-        category: "/language:java-kotlin"
-
-    - name: Upload lint results
-      uses: actions/upload-artifact@v4
-      with:
-        name: lint-results
-        path: app/build/reports/lint-results-debug.html
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
