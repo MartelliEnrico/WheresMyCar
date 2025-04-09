@@ -1,14 +1,16 @@
 <resources>
     <string name="find_car">Seleziona la tua auto</string>
-    <string name="change_name">Cambia nome</string>
+    <string name="rename_device">Rinomina</string>
+    <string name="remove_device">Rimuovi</string>
     <string name="device_connected">Connesso</string>
     <string name="shortcut_short_description">Trova %s</string>
-    <string name="shortcut_long_description">Trova l\'auto su Maps</string>
+    <string name="shortcut_long_description">Trova %s su Maps</string>
     <string-array name="shortcut_feature_name">
         <item>posizione auto</item>
     </string-array>
     <string name="open_maps">Apri Maps</string>
     <string name="position_saved">Posizione salvata %s</string>
+    <string name="no_position_saved">Nessuna posizione salvata</string>
     <string name="add_shortcut">Aggiungi shortcut</string>
     <string name="shortcut_tooltip">Aggiungendo questo shortcut alla tua schermata Home, potrai trovare la posizione della tua auto ancora più velocemente!</string>
     <string name="tooltip_complete">Capito!</string>

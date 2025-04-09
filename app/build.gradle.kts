@@ -1,4 +1,5 @@
 import com.google.android.libraries.mapsplatform.secrets_gradle_plugin.loadPropertiesFile
+import com.google.protobuf.gradle.proto
 
 plugins {
     alias(libs.plugins.android.application)
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.maps.secrets)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.protobuf)
 }
 
 val secrets = rootProject.loadPropertiesFile("secrets.properties")
@@ -79,10 +81,36 @@ android {
             excludes += "**/libdatastore_shared_counter.so"
         }
     }
+
+    sourceSets {
+        named("main") {
+            java {
+                srcDir("build/generated/sources/proto/main/java")
+            }
+            proto {
+                srcDir("src/main/proto")
+            }
+        }
+    }
 }
 
 secrets {
     propertiesFileName = "secrets.properties"
+}
+
+protobuf {
+    protoc {
+        artifact = libs.protoc.get().toString()
+    }
+    generateProtoTasks {
+        all().forEach {
+            it.builtins {
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -95,7 +123,8 @@ dependencies {
     implementation(libs.ui.tooling.preview)
     implementation(libs.material3)
     implementation(libs.lifecycle.runtime.compose)
-    implementation(libs.datastore.preferences)
+    implementation(libs.datastore)
+    implementation(libs.protobuf.javalite)
     implementation(libs.maps)
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)

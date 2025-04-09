@@ -3,6 +3,7 @@ agp = "8.9.1"
 kotlin = "2.1.20"
 lifecycle-runtime = "2.8.7"
 baselineprofile = "1.4.0-alpha10"
+protobuf = "4.30.2"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.15.0"
@@ -20,7 +21,9 @@ ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 material3 = { module = "androidx.compose.material3:material3" }
-datastore-preferences = "androidx.datastore:datastore-preferences:1.1.4"
+datastore = "androidx.datastore:datastore:1.1.4"
+protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
+protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 maps = "com.google.maps.android:maps-compose:6.5.2"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.37.2"
 play-services-location = "com.google.android.gms:play-services-location:21.3.0"
@@ -38,3 +41,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
 android-test = { id = "com.android.test", version.ref = "agp" }
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
+protobuf = "com.google.protobuf:0.9.5"

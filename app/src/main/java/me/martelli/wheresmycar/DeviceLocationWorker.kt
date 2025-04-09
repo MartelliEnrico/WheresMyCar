@@ -11,7 +11,6 @@ import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
-import androidx.datastore.preferences.core.edit
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
@@ -51,16 +50,21 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
         setForeground(ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION))
 
         val location = getLocation()
+        val address = inputData.getString(ADDRESS)!!
 
-        val prefs = applicationContext.savedDeviceStore.edit { preferences ->
-            preferences[Latitude] = location.latitude.toFloat()
-            preferences[Longitude] = location.longitude.toFloat()
-            preferences[Time] = location.time
+        val devices = applicationContext.devicesDataStore.updateData { devices ->
+            val index = devices.devicesList.indexOfFirst { it.address == address }
+            val device = devices.devicesList[index]
+            devices.toBuilder().setDevices(index,
+                device.toBuilder()
+                    .setLatitude(location.latitude)
+                    .setLongitude(location.longitude)
+                    .setTime(location.time)
+            ).build()
         }
 
-        val name = prefs[DisplayName]!!
-
-        pushDynamicShortcut(applicationContext, name, location.latitude, location.longitude)
+        val device = devices.devicesList.first { it.address == address }
+        pushDynamicShortcut(applicationContext, device)
 
         return Result.success()
     }
@@ -90,6 +94,7 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
     }
 
     companion object {
+        const val ADDRESS = "address"
         const val CHANNEL_ID = "location"
         const val NOTIFICATION_ID = 1
         const val INTERVAL_MILLIS = 100L

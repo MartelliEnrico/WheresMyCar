@@ -5,4 +5,5 @@ plugins {
     alias(libs.plugins.maps.secrets) apply false
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.baselineprofile) apply false
+    alias(libs.plugins.protobuf) apply false
 }

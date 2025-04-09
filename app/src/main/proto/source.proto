@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_package = "me.martelli.wheresmycar.proto";
+option java_multiple_files = true;
+
+message Device {
+  string address = 1;
+  string originalName = 2;
+  string name = 3;
+  optional double latitude = 4;
+  optional double longitude = 5;
+  optional int64 time = 6;
+}
+
+message Devices {
+  repeated Device devices = 1;
+}
+
+message Configs {
+  bool onboardingCompleted = 1;
+}

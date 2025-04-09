@@ -26,11 +26,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -45,30 +44,34 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -80,6 +83,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -94,11 +98,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PopupPositionProvider
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.content.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -107,13 +107,6 @@ import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.floatPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -127,14 +120,13 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.martelli.wheresmycar.proto.Configs
+import me.martelli.wheresmycar.proto.Device
+import me.martelli.wheresmycar.proto.Devices
 import me.martelli.wheresmycar.ui.theme.DarkGreen
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
-import java.io.IOException
 import java.lang.reflect.Method
 import kotlin.math.absoluteValue
 import kotlin.math.sign
@@ -151,134 +143,47 @@ class MainActivity : ComponentActivity() {
         setContent {
             WheresMyCarTheme {
                 val context = LocalContext.current
-                val configs by remember { context.configurations }.collectAsStateWithLifecycle(
-                    initialValue = null
+                val configs by remember { context.configs }.collectAsStateWithLifecycle(
+                    initialValue = Configs.getDefaultInstance()
                 )
-                val selectedDevice by remember { context.savedDevice }.collectAsStateWithLifecycle(
-                    initialValue = null
+                val devices by remember { context.devices }.collectAsStateWithLifecycle(
+                    initialValue = Devices.getDefaultInstance()
                 )
 
-                LaunchedEffect(configs) {
-                    keepSplashscreen.value = configs == null
+                LaunchedEffect(Unit) {
+                    delay(400)
+                    keepSplashscreen.value = false
                 }
 
-                LaunchedEffect(selectedDevice) {
-                    selectedDevice?.let {
-                        if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
-                            if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
-                                pushDynamicShortcut(context, it.displayName, it.latitude, it.longitude)
-                            }
-                        }
-                    }
-                }
-
-                configs?.let {
-                    AnimatedContent(
-                        targetState = it.onboardingCompleted,
-                        label = "main_content"
-                    ) { onboardingCompleted ->
-                        if (onboardingCompleted) {
-                            AppContent(selectedDevice)
-                        } else {
-                            Onboarding()
-                        }
+                AnimatedContent(
+                    targetState = configs.onboardingCompleted,
+                    label = "main_content"
+                ) { onboardingCompleted ->
+                    if (onboardingCompleted) {
+                        AppContent(devices.devicesList)
+                    } else {
+                        Onboarding()
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun Onboarding() {
-    val context = LocalContext.current
-    val pagerState = rememberPagerState { onboardingPages.size }
-
-    Scaffold(
-        bottomBar = {
-            Surface(
-                color = BottomAppBarDefaults.containerColor,
-                tonalElevation = BottomAppBarDefaults.ContainerElevation,
-                shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
-                        .height(80.dp)
-                        .padding(16.dp, 4.dp, 16.dp, 0.dp)
-                ) {
-                    HorizontalPagerIndicator(pagerState)
-
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val coroutineScope = rememberCoroutineScope()
-                        AnimatedVisibility(visible = pagerState.currentPage > 0) {
-                            TextButton(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(
-                                            pagerState.currentPage - 1
-                                        )
-                                    }
-                                }
-                            ) {
-                                Text(stringResource(R.string.back))
-                            }
-                        }
-
-                        Spacer(Modifier.weight(1f))
-
-                        Button(
-                            onClick = {
-                                coroutineScope.launch {
-                                    if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                        context.configurationsStore.edit { prefs ->
-                                            prefs[OnboardingCompleted] = true
-                                        }
-                                    } else {
-                                        pagerState.animateScrollToPage(
-                                            pagerState.currentPage + 1
-                                        )
-                                    }
-                                }
-                            }
-                        ) {
-                            val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                stringResource(R.string.complete_onboarding)
-                            } else {
-                                stringResource(R.string.next)
-                            }
-
-                            AnimatedContent(
-                                targetState = text,
-                                label = "onboarding_next_button"
-                            ) {
-                                Text(it)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    ) { contentPadding ->
-        HorizontalPager(
-            state = pagerState,
-            contentPadding = contentPadding,
-            userScrollEnabled = false,
-            key = { it }
-        ) {
-            onboardingPages[it]()
         }
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun AppContent(selectedDevice: Device?) {
+fun AppContent(devices: List<Device>) {
+    val context = LocalContext.current
+    LaunchedEffect(devices) {
+        if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
+            if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
+                devices.forEach {
+                    pushDynamicShortcut(context, it)
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -313,7 +218,6 @@ fun AppContent(selectedDevice: Device?) {
                                 }
                             }
                         ) {
-                            val context = LocalContext.current
                             PermissionBox(
                                 permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                                 rationale = stringResource(
@@ -335,39 +239,53 @@ fun AppContent(selectedDevice: Device?) {
                 }
             )
         },
-        floatingActionButton = {
-            if (selectedDevice?.hasLocation == true) {
-                InstallShortcut(device = selectedDevice)
-            }
-        },
         contentWindowInsets = WindowInsets.statusBars
     ) { innerPadding ->
-        Box(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (selectedDevice?.hasLocation == true) {
-                LocationMap(
-                    modifier = Modifier.fillMaxSize(),
-                    device = selectedDevice
-                )
-            } else {
-                EmptyState(
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp),
-                shadowElevation = 2.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(vertical = 16.dp)
+            items(devices, key = { it.address }) {
+                Card(
+                    modifier = Modifier.fillParentMaxWidth(),
+                    colors = CardDefaults.elevatedCardColors(),
+                    elevation = CardDefaults.elevatedCardElevation(),
                 ) {
-                    selectedDevice?.let { DeviceInfo(device = it) }
-                    FindCar(modifier = Modifier.padding(horizontal = 16.dp))
+                    if (it.hasLocation) {
+                        LocationMap(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(16f / 9, matchHeightConstraintsFirst = true)
+                                .clip(CardDefaults.shape),
+                            device = it
+                        )
+                    }
+
+                    DeviceInfo(device = it)
+                }
+            }
+            if (devices.isEmpty()) {
+                item("empty_state") {
+                    EmptyState(
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .aspectRatio(1f)
+                            .clip(CardDefaults.shape)
+                    )
+                }
+            }
+            item("find_car") {
+                Box(
+                    modifier = Modifier.fillParentMaxWidth()
+                ) {
+                    FindCar(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(vertical = 16.dp)
+                    )
                 }
             }
         }
@@ -376,6 +294,7 @@ fun AppContent(selectedDevice: Device?) {
 
 @Composable
 fun DeviceInfo(device: Device) {
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
     var openDialog by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
@@ -383,7 +302,7 @@ fun DeviceInfo(device: Device) {
     val focusRequester = remember { FocusRequester() }
 
     var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(device.displayName, selection = TextRange(device.displayName.length)))
+        mutableStateOf(TextFieldValue(device.name, selection = TextRange(device.name.length)))
     }
 
     if (openDialog) {
@@ -394,12 +313,14 @@ fun DeviceInfo(device: Device) {
                     onClick = {
                         openDialog = false
                         coroutineScope.launch {
-                            val displayName = name.text.ifBlank { device.name }
-                            context.savedDeviceStore.edit { preferences ->
-                                preferences[DisplayName] = displayName
+                            val displayName = name.text.ifBlank { device.originalName }
+                            val newDevice = device.toBuilder().setName(displayName).build()
+                            context.devicesDataStore.updateData { devices ->
+                                val index = devices.devicesList.indexOfFirst { it.address == device.address }
+                                devices.toBuilder().setDevices(index, newDevice).build()
                             }
 
-                            pushDynamicShortcut(context, displayName, device.latitude, device.longitude)
+                            pushDynamicShortcut(context, newDevice)
                         }
                     }
                 ) {
@@ -414,7 +335,7 @@ fun DeviceInfo(device: Device) {
                 }
             },
             title = {
-                Text(stringResource(R.string.change_name))
+                Text(stringResource(R.string.rename_device))
             },
             text = {
                 TextField(
@@ -422,7 +343,7 @@ fun DeviceInfo(device: Device) {
                     onValueChange = { name = it },
                     modifier = Modifier.focusRequester(focusRequester),
                     placeholder = {
-                        Text(text = device.name)
+                        Text(text = device.originalName)
                     },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
                 )
@@ -437,25 +358,92 @@ fun DeviceInfo(device: Device) {
     ListItem(
         headlineContent = {
             Text(
-                text = device.displayName,
+                text = device.name,
                 style = MaterialTheme.typography.headlineMedium
             )
         },
-        supportingContent = if (device.time > 0) ({
-            Text(
-                text = stringResource(R.string.position_saved, timeAgo(device.time))
-            )
-        }) else null,
+        supportingContent = {
+            if (device.time > 0) {
+                Text(text = stringResource(R.string.position_saved, timeAgo(device.time)))
+            } else {
+                Text(text = stringResource(R.string.no_position_saved))
+            }
+        },
         trailingContent = {
-            FilledTonalIconButton(
-                onClick = { openDialog = true },
-                content = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.drive_file_rename),
-                        contentDescription = null
+            IconButton(
+                onClick = { menuExpanded = !menuExpanded }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null
+                )
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false },
+            ) {
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(R.string.rename_device))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.drive_file_rename),
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        menuExpanded = false
+                        openDialog = true
+                    }
+                )
+
+                if (device.hasLocation && ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(stringResource(R.string.add_shortcut))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.app_shortcut),
+                                contentDescription = null
+                            )
+                        },
+                        onClick = {
+                            menuExpanded = false
+
+                            val shortcut = buildShortcut(context, device)
+                            val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
+                            val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
+
+                            ShortcutManagerCompat.requestPinShortcut(context, shortcut, successCallback.intentSender)
+                        }
                     )
                 }
-            )
+
+                HorizontalDivider()
+
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(R.string.remove_device))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        menuExpanded = false
+                        coroutineScope.launch {
+                            context.devicesDataStore.updateData { devices ->
+                                val index = devices.devicesList.indexOfFirst { it.address == device.address }
+                                devices.toBuilder().removeDevices(index).build()
+                            }
+                        }
+                    }
+                )
+            }
         }
     )
 }
@@ -506,12 +494,13 @@ fun FindCar(modifier: Modifier = Modifier) {
                             modifier = Modifier.clickable {
                                 openDialog = false
                                 coroutineScope.launch {
-                                    context.savedDeviceStore.edit { preferences ->
-                                        preferences[Name] = it.name
-                                        preferences[Address] = it.address
-                                        preferences[Latitude] = 0.0f
-                                        preferences[Longitude] = 0.0f
-                                        preferences[Time] = 0
+                                    context.devicesDataStore.updateData { devices ->
+                                        devices.toBuilder().addDevices(
+                                            Device.newBuilder()
+                                                .setAddress(it.address)
+                                                .setOriginalName(it.name)
+                                                .setName(it.name)
+                                        ).build()
                                     }
                                 }
                             },
@@ -575,6 +564,93 @@ fun ErrorIconButton(onClick: () -> Unit, content: @Composable () -> Unit) {
                 .padding(2.dp)
         ) {
             Text("!")
+        }
+    }
+}
+
+@Composable
+fun Onboarding() {
+    val context = LocalContext.current
+    val pagerState = rememberPagerState { onboardingPages.size }
+
+    Scaffold(
+        bottomBar = {
+            Surface(
+                color = BottomAppBarDefaults.containerColor,
+                tonalElevation = BottomAppBarDefaults.ContainerElevation,
+                shape = RoundedCornerShape(32.dp, 32.dp, 0.dp, 0.dp)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
+                        .height(80.dp)
+                        .padding(16.dp, 4.dp, 16.dp, 0.dp)
+                ) {
+                    HorizontalPagerIndicator(pagerState)
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val coroutineScope = rememberCoroutineScope()
+                        AnimatedVisibility(visible = pagerState.currentPage > 0) {
+                            TextButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(
+                                            pagerState.currentPage - 1
+                                        )
+                                    }
+                                }
+                            ) {
+                                Text(stringResource(R.string.back))
+                            }
+                        }
+
+                        Spacer(Modifier.weight(1f))
+
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                        context.configsDataStore.updateData { configs ->
+                                            configs.toBuilder().setOnboardingCompleted(true).build()
+                                        }
+                                    } else {
+                                        pagerState.animateScrollToPage(
+                                            pagerState.currentPage + 1
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            val text = if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                stringResource(R.string.complete_onboarding)
+                            } else {
+                                stringResource(R.string.next)
+                            }
+
+                            AnimatedContent(
+                                targetState = text,
+                                label = "onboarding_next_button"
+                            ) {
+                                Text(it)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ) { contentPadding ->
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = contentPadding,
+            userScrollEnabled = false,
+            key = { it }
+        ) {
+            onboardingPages[it]()
         }
     }
 }
@@ -770,95 +846,19 @@ fun LocationPermissions() {
 }
 
 @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-fun getConnectedBluetoothDevices(context: Context): List<Device> {
+fun getConnectedBluetoothDevices(context: Context): List<SavedDevice> {
     return context.getSystemService<BluetoothManager>()?.adapter?.bondedDevices?.filterNotNull().orEmpty().map {
-        Device(it.name, it.address, IsConnected.invoke(it) as Boolean)
+        SavedDevice(it.name, it.address, IsConnected.invoke(it) as Boolean)
     }
 }
 
 val IsConnected: Method = BluetoothDevice::class.java.getMethod("isConnected")
 
-data class Config(
-    val onboardingCompleted: Boolean
-)
-
-const val Configurations = "configurations"
-val OnboardingCompleted = booleanPreferencesKey("onboarding_completed")
-
-val Context.configurationsStore by preferencesDataStore(
-    name = Configurations
-)
-
-val Context.configurations: Flow<Config>
-    get() = configurationsStore.data
-        .catch { e ->
-            if (e is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw e
-            }
-        }.map { preferences ->
-            val onboardingCompleted = preferences[OnboardingCompleted] ?: false
-
-            Config(onboardingCompleted)
-        }
-
-data class Device(
+data class SavedDevice(
     val name: String,
     val address: String,
-    val connected: Boolean = false,
-    val latitude: Double = 0.0,
-    val longitude: Double = 0.0,
-    val time: Long = 0,
-    val displayName: String = name
-) {
-    val hasLocation = latitude != 0.0 && longitude != 0.0
-}
-
-const val SavedDevice = "saved_device"
-val Name = stringPreferencesKey("name")
-val Address = stringPreferencesKey("address")
-val Latitude = floatPreferencesKey("latitude")
-val Longitude = floatPreferencesKey("longitude")
-val Time = longPreferencesKey("time")
-val DisplayName = stringPreferencesKey("display_name")
-
-val Context.savedDeviceStore by preferencesDataStore(
-    name = SavedDevice
+    val connected: Boolean
 )
-
-val Context.savedDevice: Flow<Device?>
-    get() = savedDeviceStore.data
-        .catch { e ->
-            if (e is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw e
-            }
-        }.map { preferences ->
-            val name = preferences[Name]
-            val address = preferences[Address]
-            val latitude = preferences[Latitude] ?: 0.0
-            val longitude = preferences[Longitude] ?: 0.0
-            val time = preferences[Time] ?: 0
-            val displayName = preferences[DisplayName]
-
-            if (name != null && address != null) {
-                Device(
-                    name,
-                    address,
-                    false,
-                    latitude.toDouble(),
-                    longitude.toDouble(),
-                    time,
-                    displayName ?: name
-                )
-            } else {
-                null
-            }
-        }
-
-const val ShortcutId = "navigate"
 
 fun locationIntent(latitude: Double, longitude: Double) =
     Intent(
@@ -866,21 +866,21 @@ fun locationIntent(latitude: Double, longitude: Double) =
         "https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}".toUri()
     )
 
-fun buildShortcut(context: Context, name: String, latitude: Double, longitude: Double) =
-    ShortcutInfoCompat.Builder(context, ShortcutId)
-        .setShortLabel(context.getString(R.string.shortcut_short_description, name))
-        .setLongLabel(context.getString(R.string.shortcut_long_description))
+fun buildShortcut(context: Context, device: Device) =
+    ShortcutInfoCompat.Builder(context, "navigate_to_${device.address}")
+        .setShortLabel(context.getString(R.string.shortcut_short_description, device.name))
+        .setLongLabel(context.getString(R.string.shortcut_long_description, device.name))
         .setIcon(IconCompat.createWithResource(context, R.drawable.location_pin))
         .addCapabilityBinding(
             "actions.intent.OPEN_APP_FEATURE",
             "feature",
             context.resources.getStringArray(R.array.shortcut_feature_name).asList()
         )
-        .setIntent(locationIntent(latitude, longitude))
+        .setIntent(locationIntent(device.latitude, device.longitude))
         .build()
 
-fun pushDynamicShortcut(context: Context, name: String, latitude: Double, longitude: Double) {
-    val shortcut = buildShortcut(context, name, latitude, longitude)
+fun pushDynamicShortcut(context: Context, device: Device) {
+    val shortcut = buildShortcut(context, device)
     ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
 }
 
@@ -916,7 +916,7 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
     val context = LocalContext.current
 
     val coordinates = LatLng(device.latitude, device.longitude)
-    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 17f)
+    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 16f)
 
     val cameraPositionState = rememberCameraPositionState {
         position = cameraPosition
@@ -945,93 +945,9 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         onMapClick = {
             context.startActivity(locationIntent(device.latitude, device.longitude))
         },
-        contentPadding = PaddingValues(
-            horizontal = 16.dp,
-            vertical = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        ),
         mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
     ) {
         val markerState = rememberUpdatedMarkerState(position = coordinates)
         Marker(state = markerState)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun InstallShortcut(device: Device) {
-    val context = LocalContext.current
-    if (ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
-        val tooltipState = rememberTooltipState(isPersistent = true)
-        val scope = rememberCoroutineScope()
-
-        val tooltipAnchorSpacing = with(LocalDensity.current) {
-            8.dp.roundToPx()
-        }
-        val positionProvider = remember(tooltipAnchorSpacing) {
-            object : PopupPositionProvider {
-                override fun calculatePosition(
-                    anchorBounds: IntRect,
-                    windowSize: IntSize,
-                    layoutDirection: LayoutDirection,
-                    popupContentSize: IntSize
-                ): IntOffset {
-                    var x = anchorBounds.left
-                    // Try to shift it to the left of the anchor
-                    // if the tooltip would collide with the right side of the screen
-                    if (x + popupContentSize.width > windowSize.width) {
-                        x = anchorBounds.right - popupContentSize.width
-                        // Center if it'll also collide with the left side of the screen
-                        if (x < 0)
-                            x = anchorBounds.right +
-                                    (anchorBounds.width - popupContentSize.width) / 2
-                    }
-
-                    // Tooltip prefers to be above the anchor,
-                    // but if this causes the tooltip to overlap with the anchor
-                    // then we place it below the anchor
-                    var y = anchorBounds.top - popupContentSize.height - tooltipAnchorSpacing
-                    if (y < 0)
-                        y = anchorBounds.bottom + tooltipAnchorSpacing
-                    return IntOffset(x, y)
-                }
-            }
-        }
-
-        TooltipBox(
-            positionProvider = positionProvider,
-            tooltip = {
-                RichTooltip(
-                    title = { Text(stringResource(R.string.add_shortcut)) },
-                    action = {
-                        TextButton(
-                            onClick = {
-                                scope.launch { tooltipState.dismiss() }
-                            }
-                        ) {
-                            Text(stringResource(R.string.tooltip_complete))
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.shortcut_tooltip))
-                }
-            },
-            state = tooltipState
-        ) {
-            FloatingActionButton(
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
-                onClick = {
-                    val shortcut = buildShortcut(context, device.displayName, device.latitude, device.longitude)
-                    val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
-                    val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
-
-                    ShortcutManagerCompat.requestPinShortcut(context, shortcut, successCallback.intentSender)
-                }
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.app_shortcut),
-                    contentDescription = stringResource(R.string.add_shortcut)
-                )
-            }
-        }
     }
 }
