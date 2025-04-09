@@ -22,9 +22,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,6 +72,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -115,12 +118,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.ComposeMapColorScheme
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
@@ -436,11 +442,8 @@ fun DeviceInfo(device: Device) {
             )
         },
         supportingContent = if (device.time > 0) ({
-            val datetime = DateUtils.formatDateTime(
-                context, device.time, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME
-            )
             Text(
-                text = stringResource(R.string.last_check, datetime)
+                text = stringResource(R.string.position_saved, timeAgo(device.time))
             )
         }) else null,
         trailingContent = {
@@ -455,6 +458,24 @@ fun DeviceInfo(device: Device) {
             )
         }
     )
+}
+
+@Composable
+fun timeAgo(time: Long): String {
+    var currentTimeMillis by remember {
+        mutableLongStateOf(System.currentTimeMillis())
+    }
+
+    LaunchedEffect(currentTimeMillis) {
+        while (true) {
+            delay(1000)
+            currentTimeMillis = System.currentTimeMillis()
+        }
+    }
+
+    return DateUtils.getRelativeTimeSpanString(
+        time, currentTimeMillis, DateUtils.MINUTE_IN_MILLIS
+    ).toString()
 }
 
 @Composable
@@ -895,7 +916,7 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
     val context = LocalContext.current
 
     val coordinates = LatLng(device.latitude, device.longitude)
-    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 16.5f)
+    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 17f)
 
     val cameraPositionState = rememberCameraPositionState {
         position = cameraPosition
@@ -905,11 +926,14 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
 
-    val markerState = rememberUpdatedMarkerState(position = coordinates)
-
     GoogleMap(
         modifier = modifier,
+        mergeDescendants = true,
         cameraPositionState = cameraPositionState,
+        contentDescription = stringResource(R.string.open_maps),
+        properties = MapProperties(
+            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.empty_map_style)
+        ),
         uiSettings = MapUiSettings(
             rotationGesturesEnabled = false,
             scrollGesturesEnabled = false,
@@ -921,8 +945,13 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         onMapClick = {
             context.startActivity(locationIntent(device.latitude, device.longitude))
         },
+        contentPadding = PaddingValues(
+            horizontal = 16.dp,
+            vertical = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        ),
         mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
     ) {
+        val markerState = rememberUpdatedMarkerState(position = coordinates)
         Marker(state = markerState)
     }
 }

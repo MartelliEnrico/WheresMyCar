@@ -9,7 +9,7 @@
         <item>car location</item>
     </string-array>
     <string name="open_maps">Open Maps</string>
-    <string name="last_check">Last checked on %s</string>
+    <string name="position_saved">Position saved %s</string>
     <string name="add_shortcut">Add shortcut</string>
     <string name="shortcut_tooltip">With this shortcut added to your home screen, you can find your car location even faster!</string>
     <string name="tooltip_complete">Got it!</string>
