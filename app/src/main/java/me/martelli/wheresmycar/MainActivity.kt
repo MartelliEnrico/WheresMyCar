@@ -178,7 +178,9 @@ fun AppContent(devices: List<Device>) {
         if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
             if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
                 devices.forEach {
-                    pushDynamicShortcut(context, it)
+                    if (it.hasLocation) {
+                        pushDynamicShortcut(context, it)
+                    }
                 }
             }
         }
