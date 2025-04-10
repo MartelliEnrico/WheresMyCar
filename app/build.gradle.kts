@@ -35,9 +35,9 @@ android {
     signingConfigs {
         create("release") {
             keyAlias = "upload"
-            keyPassword = secrets["keyPassword"] as String
-            storeFile = file(secrets["storeFile"] as String)
-            storePassword = secrets["storePassword"] as String
+            keyPassword = secrets.getProperty("keyPassword", "")
+            storeFile = file(secrets.getProperty("storeFile", "."))
+            storePassword = secrets.getProperty("storePassword", "")
         }
     }
 
