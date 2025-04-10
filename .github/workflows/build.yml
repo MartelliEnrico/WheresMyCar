@@ -50,7 +50,7 @@ jobs:
         base64 -d keystore-b64.txt > app/$KEYSTORE_PATH
 
     - name: Build
-      run: ./gradlew build
+      run: ./gradlew :app:assemble
 
     - name: Cleanup
       if: always()
