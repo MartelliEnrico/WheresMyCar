@@ -38,7 +38,6 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        cache-disabled: true
         dependency-graph: generate-and-submit
         build-scan-publish: true
         build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
@@ -49,7 +48,7 @@ jobs:
         echo MAPS_API_KEY="" >> ./secrets.properties
 
     - name: Build
-      run: ./gradlew check
+      run: ./gradlew check --no-build-cache
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
