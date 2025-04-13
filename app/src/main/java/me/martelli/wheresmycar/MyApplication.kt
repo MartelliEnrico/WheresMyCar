@@ -3,6 +3,10 @@ package me.martelli.wheresmycar
 import android.app.Application
 import android.content.Context
 import androidx.datastore.dataStore
+import me.martelli.wheresmycar.data.ConfigsRepo
+import me.martelli.wheresmycar.data.ConfigsSerializer
+import me.martelli.wheresmycar.data.DevicesRepo
+import me.martelli.wheresmycar.data.DevicesSerializer
 
 class MyApplication : Application() {
     lateinit var configs: ConfigsRepo

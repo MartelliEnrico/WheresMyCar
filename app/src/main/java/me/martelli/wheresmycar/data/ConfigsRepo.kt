@@ -1,4 +1,4 @@
-package me.martelli.wheresmycar
+package me.martelli.wheresmycar.data
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore

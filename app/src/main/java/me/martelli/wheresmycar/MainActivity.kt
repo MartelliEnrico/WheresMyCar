@@ -130,6 +130,9 @@ import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import me.martelli.wheresmycar.data.AppViewModel
+import me.martelli.wheresmycar.data.Event
+import me.martelli.wheresmycar.data.hasLocation
 import me.martelli.wheresmycar.proto.Device
 import me.martelli.wheresmycar.ui.theme.DarkGreen
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
@@ -523,7 +526,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
         },
         supportingContent = {
             if (device.time > 0) {
-                Text(text = stringResource(R.string.position_saved, timeAgo(device.time)))
+                Text(text = timeAgo(device.time))
             } else {
                 Text(text = stringResource(R.string.no_position_saved))
             }

@@ -1,4 +1,4 @@
-package me.martelli.wheresmycar
+package me.martelli.wheresmycar.data
 
 import android.content.Context
 import androidx.datastore.core.CorruptionException
@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import me.martelli.wheresmycar.proto.Device
 import me.martelli.wheresmycar.proto.Devices
+import me.martelli.wheresmycar.pushDynamicShortcut
+import me.martelli.wheresmycar.removeDynamicShortcut
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream

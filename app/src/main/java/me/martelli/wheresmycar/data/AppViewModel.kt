@@ -1,4 +1,4 @@
-package me.martelli.wheresmycar
+package me.martelli.wheresmycar.data
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import me.martelli.wheresmycar.MyApplication
 import me.martelli.wheresmycar.proto.Device
 
 class AppViewModel(

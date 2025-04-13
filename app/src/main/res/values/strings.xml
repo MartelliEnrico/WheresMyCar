@@ -10,7 +10,6 @@
         <item>car location</item>
     </string-array>
     <string name="open_maps">Open Maps</string>
-    <string name="position_saved">Position saved %s</string>
     <string name="no_position_saved">No position saved</string>
     <string name="add_shortcut">Add shortcut</string>
     <string name="shortcut_tooltip">With this shortcut added to your home screen, you can find your car location even faster!</string>
