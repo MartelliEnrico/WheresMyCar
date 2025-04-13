@@ -20,6 +20,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -52,19 +53,16 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
         val location = getLocation()
         val address = inputData.getString(ADDRESS)!!
 
-        val devices = applicationContext.devicesDataStore.updateData { devices ->
-            val index = devices.devicesList.indexOfFirst { it.address == address }
-            val device = devices.devicesList[index]
-            devices.toBuilder().setDevices(index,
-                device.toBuilder()
-                    .setLatitude(location.latitude)
-                    .setLongitude(location.longitude)
-                    .setTime(location.time)
-            ).build()
-        }
+        val devices = (applicationContext as MyApplication).devices
 
-        val device = devices.devicesList.first { it.address == address }
-        pushDynamicShortcut(applicationContext, device)
+        val device = devices.devices.first().first { it.address == address }
+            .toBuilder()
+            .setLatitude(location.latitude)
+            .setLongitude(location.longitude)
+            .setTime(location.time)
+            .build()
+
+        devices.updateDevice(device)
 
         return Result.success()
     }

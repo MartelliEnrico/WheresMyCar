@@ -17,7 +17,7 @@ class DeviceDisconnectedReceiver : BroadcastReceiver() {
         if (intent?.action != BluetoothDevice.ACTION_ACL_DISCONNECTED) return
 
         val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java) ?: return
-        val devices = runBlocking { context.devices.first() }.devicesList
+        val devices = runBlocking { (context.applicationContext as MyApplication).devices.devices.first() }
 
         if (devices.any { it.address == device.address }) {
             val workManager = WorkManager.getInstance(context)

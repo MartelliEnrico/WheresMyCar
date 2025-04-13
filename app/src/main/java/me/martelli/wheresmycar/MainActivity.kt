@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -66,14 +67,19 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -88,8 +94,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -107,7 +115,7 @@ import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -122,9 +130,7 @@ import com.google.maps.android.compose.rememberUpdatedMarkerState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import me.martelli.wheresmycar.proto.Configs
 import me.martelli.wheresmycar.proto.Device
-import me.martelli.wheresmycar.proto.Devices
 import me.martelli.wheresmycar.ui.theme.DarkGreen
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.lang.reflect.Method
@@ -135,36 +141,46 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val keepSplashscreen = MutableStateFlow(true)
         installSplashScreen().setKeepOnScreenCondition { keepSplashscreen.value }
-
         enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
 
         setContent {
-            WheresMyCarTheme {
-                val context = LocalContext.current
-                val configs by remember { context.configs }.collectAsStateWithLifecycle(
-                    initialValue = Configs.getDefaultInstance()
-                )
-                val devices by remember { context.devices }.collectAsStateWithLifecycle(
-                    initialValue = Devices.getDefaultInstance()
-                )
+            App(keepSplashscreen)
+        }
+    }
+}
 
-                LaunchedEffect(Unit) {
-                    delay(400)
-                    keepSplashscreen.value = false
-                }
+@Composable
+fun App(
+    keepSplashscreen: MutableStateFlow<Boolean>,
+    appViewModel: AppViewModel = viewModel(factory = AppViewModel.Factory)
+) {
+    WheresMyCarTheme {
+        val uiState by appViewModel.uiState.collectAsState()
 
-                AnimatedContent(
-                    targetState = configs.onboardingCompleted,
-                    label = "main_content"
-                ) { onboardingCompleted ->
-                    if (onboardingCompleted) {
-                        AppContent(devices.devicesList)
-                    } else {
-                        Onboarding()
+        LaunchedEffect(uiState.loading) {
+            keepSplashscreen.value = uiState.loading
+        }
+
+        val context = LocalContext.current
+        LaunchedEffect(context, uiState.devices) {
+            if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
+                if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
+                    uiState.devices.forEach {
+                        if (it.hasLocation) {
+                            pushDynamicShortcut(context, it)
+                        }
                     }
                 }
+            }
+        }
+
+        AnimatedContent(uiState.onboardingCompleted) {
+            if (it) {
+                AppContent(uiState.devices, uiState.eventSink)
+            } else {
+                Onboarding(uiState.eventSink)
             }
         }
     }
@@ -172,20 +188,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun AppContent(devices: List<Device>) {
+fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
     val context = LocalContext.current
-    LaunchedEffect(devices) {
-        if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
-            if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
-                devices.forEach {
-                    if (it.hasLocation) {
-                        pushDynamicShortcut(context, it)
-                    }
-                }
-            }
-        }
-    }
-
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -243,6 +247,10 @@ fun AppContent(devices: List<Device>) {
         },
         contentWindowInsets = WindowInsets.statusBars
     ) { innerPadding ->
+        val dismissThreshold = with(LocalDensity.current) { 112.dp.toPx() }
+        val haptic = LocalHapticFeedback.current
+        val coroutineScope = rememberCoroutineScope()
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -251,42 +259,110 @@ fun AppContent(devices: List<Device>) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(devices, key = { it.address }) {
-                Card(
-                    modifier = Modifier.fillParentMaxWidth(),
-                    colors = CardDefaults.elevatedCardColors(),
-                    elevation = CardDefaults.elevatedCardElevation(),
-                ) {
-                    if (it.hasLocation) {
-                        LocationMap(
+                val dismissState = rememberSwipeToDismissBoxState(
+                    positionalThreshold = { dismissThreshold }
+                )
+
+                // this is all a hack for rememberSwipeToDismissBoxState remembering too much
+                LaunchedEffect(Unit) {
+                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                }
+
+                LaunchedEffect(dismissState.currentValue) {
+                    delay(1)
+                    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                        eventSink(Event.RemoveDevice(it))
+                    }
+                }
+
+                LaunchedEffect(dismissState.targetValue) {
+                    delay(1)
+                    if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                }
+
+                SwipeToDismissBox(
+                    state = dismissState,
+                    backgroundContent = {
+                        val color by animateColorAsState(
+                            when (dismissState.targetValue) {
+                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                else -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0f)
+                            }
+                        )
+
+                        Box(
+                            contentAlignment = Alignment.CenterEnd,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(16f / 9, matchHeightConstraintsFirst = true)
-                                .clip(CardDefaults.shape),
-                            device = it
+                                .fillMaxSize()
+                                .clip(CardDefaults.shape)
+                                .background(color)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.minimumInteractiveComponentSize(),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
+                    modifier = Modifier.animateItem(),
+                    enableDismissFromStartToEnd = false
+                ) {
+                    Card(
+                        modifier = Modifier.fillParentMaxWidth(),
+                        colors = CardDefaults.elevatedCardColors(),
+                        elevation = CardDefaults.elevatedCardElevation(),
+                    ) {
+                        if (it.hasLocation) {
+                            LocationMap(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(16f / 9, matchHeightConstraintsFirst = true)
+                                    .clip(CardDefaults.shape),
+                                device = it
+                            )
+                        }
+
+                        DeviceInfo(
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            device = it,
+                            updateDevice = { eventSink(Event.UpdateDevice(it)) },
+                            removeDevice = {
+                                coroutineScope.launch {
+                                    dismissState.dismiss(SwipeToDismissBoxValue.EndToStart)
+                                }
+                            }
                         )
                     }
-
-                    DeviceInfo(device = it)
                 }
             }
+
             if (devices.isEmpty()) {
                 item("empty_state") {
                     EmptyState(
                         modifier = Modifier
+                            .animateItem()
                             .fillParentMaxWidth()
                             .aspectRatio(1f)
                             .clip(CardDefaults.shape)
                     )
                 }
             }
+
             item("find_car") {
                 Box(
-                    modifier = Modifier.fillParentMaxWidth()
+                    modifier = Modifier
+                        .animateItem()
+                        .fillParentMaxWidth()
                 ) {
                     FindCar(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .padding(vertical = 16.dp)
+                            .padding(vertical = 16.dp),
+                        devices,
+                        eventSink
                     )
                 }
             }
@@ -295,16 +371,102 @@ fun AppContent(devices: List<Device>) {
 }
 
 @Composable
-fun DeviceInfo(device: Device) {
+fun ErrorIconButton(onClick: () -> Unit, content: @Composable () -> Unit) {
+    Box {
+        FilledTonalIconButton(
+            onClick = onClick,
+            content = content
+        )
+        Badge(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(2.dp)
+        ) {
+            Text("!")
+        }
+    }
+}
+
+fun pushDynamicShortcut(context: Context, device: Device) {
+    val shortcut = buildShortcut(context, device)
+    ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
+}
+
+fun removeDynamicShortcut(context: Context, device: Device) {
+    ShortcutManagerCompat.removeDynamicShortcuts(context, listOf(shortcutId(device)))
+}
+
+fun buildShortcut(context: Context, device: Device) =
+    ShortcutInfoCompat.Builder(context, shortcutId(device))
+        .setShortLabel(context.getString(R.string.shortcut_short_description, device.name))
+        .setLongLabel(context.getString(R.string.shortcut_long_description, device.name))
+        .setIcon(IconCompat.createWithResource(context, R.drawable.location_pin))
+        .setIntent(locationIntent(device.latitude, device.longitude))
+        .build()
+
+fun shortcutId(device: Device) = "navigate_to_${device.address}"
+
+fun locationIntent(latitude: Double, longitude: Double) =
+    Intent(
+        Intent.ACTION_VIEW,
+        "https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}".toUri()
+    )
+
+@Composable
+fun LocationMap(modifier: Modifier = Modifier, device: Device) {
+    val context = LocalContext.current
+
+    val coordinates = LatLng(device.latitude, device.longitude)
+    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 16f)
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = cameraPosition
+    }
+
+    LaunchedEffect(cameraPosition) {
+        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
+    }
+
+    GoogleMap(
+        modifier = modifier,
+        mergeDescendants = true,
+        cameraPositionState = cameraPositionState,
+        contentDescription = stringResource(R.string.open_maps),
+        properties = MapProperties(
+            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.empty_map_style)
+        ),
+        uiSettings = MapUiSettings(
+            rotationGesturesEnabled = false,
+            scrollGesturesEnabled = false,
+            scrollGesturesEnabledDuringRotateOrZoom = false,
+            tiltGesturesEnabled = false,
+            zoomControlsEnabled = false,
+            zoomGesturesEnabled = false
+        ),
+        onMapClick = {
+            context.startActivity(locationIntent(device.latitude, device.longitude))
+        },
+        mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
+    ) {
+        val markerState = rememberUpdatedMarkerState(position = coordinates)
+        Marker(state = markerState)
+    }
+}
+
+@Composable
+fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Device) -> Unit, removeDevice: () -> Unit) {
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
     var openDialog by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
 
     var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(device.name, selection = TextRange(device.name.length)))
+    }
+
+    LaunchedEffect(Unit) {
+        name = TextFieldValue(device.name, selection = TextRange(device.name.length))
     }
 
     if (openDialog) {
@@ -314,16 +476,10 @@ fun DeviceInfo(device: Device) {
                 TextButton(
                     onClick = {
                         openDialog = false
-                        coroutineScope.launch {
-                            val displayName = name.text.ifBlank { device.originalName }
-                            val newDevice = device.toBuilder().setName(displayName).build()
-                            context.devicesDataStore.updateData { devices ->
-                                val index = devices.devicesList.indexOfFirst { it.address == device.address }
-                                devices.toBuilder().setDevices(index, newDevice).build()
-                            }
 
-                            pushDynamicShortcut(context, newDevice)
-                        }
+                        val displayName = name.text.ifBlank { device.originalName }
+                        val newDevice = device.toBuilder().setName(displayName).build()
+                        updateDevice(newDevice)
                     }
                 ) {
                     Text(stringResource(R.string.ok))
@@ -358,6 +514,7 @@ fun DeviceInfo(device: Device) {
     }
 
     ListItem(
+        modifier = modifier,
         headlineContent = {
             Text(
                 text = device.name,
@@ -437,16 +594,14 @@ fun DeviceInfo(device: Device) {
                     },
                     onClick = {
                         menuExpanded = false
-                        coroutineScope.launch {
-                            context.devicesDataStore.updateData { devices ->
-                                val index = devices.devicesList.indexOfFirst { it.address == device.address }
-                                devices.toBuilder().removeDevices(index).build()
-                            }
-                        }
+                        removeDevice()
                     }
                 )
             }
-        }
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
     )
 }
 
@@ -469,16 +624,70 @@ fun timeAgo(time: Long): String {
 }
 
 @Composable
-fun FindCar(modifier: Modifier = Modifier) {
+fun EmptyState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .background(color = MaterialTheme.colorScheme.secondaryContainer)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Filled.LocationOn,
+            contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.empty_state_title),
+            style = MaterialTheme.typography.displaySmall
+        )
+        Text(
+            text = stringResource(R.string.empty_state_body),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Event) -> Unit) {
     var openDialog by rememberSaveable { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    var selectedDevice by remember { mutableStateOf<SavedDevice?>(null) }
+
+    LaunchedEffect(openDialog) { selectedDevice = null }
 
     if (openDialog) {
         AlertDialog(
             onDismissRequest = { openDialog = false },
-            confirmButton = {},
+            confirmButton = {
+                TextButton(
+                    enabled = selectedDevice != null,
+                    onClick = {
+                        openDialog = false
+
+                        selectedDevice?.let {
+                            val device = Device.newBuilder()
+                                .setAddress(it.address)
+                                .setOriginalName(it.name)
+                                .setName(it.name)
+                                .build()
+                            eventSink(Event.AddDevice(device))
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { openDialog = false }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.directions_car),
@@ -489,33 +698,28 @@ fun FindCar(modifier: Modifier = Modifier) {
                 Text(stringResource(R.string.find_car))
             },
             text = {
-                val connectedDevices = getConnectedBluetoothDevices(context)
+                val connectedDevices = getConnectedBluetoothDevices(context).filter {
+                    devices.none { d -> d.address == it.address }
+                }
                 LazyColumn {
                     items(connectedDevices, key = { it.address }) {
                         ListItem(
                             modifier = Modifier.clickable {
-                                openDialog = false
-                                coroutineScope.launch {
-                                    context.devicesDataStore.updateData { devices ->
-                                        devices.toBuilder().addDevices(
-                                            Device.newBuilder()
-                                                .setAddress(it.address)
-                                                .setOriginalName(it.name)
-                                                .setName(it.name)
-                                        ).build()
-                                    }
-                                }
+                                selectedDevice = it
                             },
                             headlineContent = {
                                 Text(it.name)
                             },
                             supportingContent = {
-                                Text(it.address)
-                            },
-                            overlineContent = {
                                 if (it.connected) {
                                     Text(stringResource(R.string.device_connected))
                                 }
+                            },
+                            leadingContent = {
+                                RadioButton(
+                                    selected = selectedDevice == it,
+                                    onClick = null
+                                )
                             },
                             colors = ListItemDefaults.colors(
                                 containerColor = AlertDialogDefaults.containerColor,
@@ -533,7 +737,7 @@ fun FindCar(modifier: Modifier = Modifier) {
         openDialog = isGranted
     }
 
-    OutlinedButton(
+    Button(
         modifier = modifier,
         onClick = {
             when (PackageManager.PERMISSION_GRANTED) {
@@ -553,26 +757,23 @@ fun FindCar(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun ErrorIconButton(onClick: () -> Unit, content: @Composable () -> Unit) {
-    Box {
-        FilledTonalIconButton(
-            onClick = onClick,
-            content = content
-        )
-        Badge(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(2.dp)
-        ) {
-            Text("!")
-        }
+@RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+fun getConnectedBluetoothDevices(context: Context): List<SavedDevice> {
+    return context.getSystemService<BluetoothManager>()?.adapter?.bondedDevices?.filterNotNull().orEmpty().map {
+        SavedDevice(it.name, it.address, IsConnected.invoke(it) as Boolean)
     }
 }
 
+val IsConnected: Method = BluetoothDevice::class.java.getMethod("isConnected")
+
+data class SavedDevice(
+    val name: String,
+    val address: String,
+    val connected: Boolean
+)
+
 @Composable
-fun Onboarding() {
-    val context = LocalContext.current
+fun Onboarding(eventSink: (Event) -> Unit) {
     val pagerState = rememberPagerState { onboardingPages.size }
 
     Scaffold(
@@ -615,15 +816,11 @@ fun Onboarding() {
 
                         Button(
                             onClick = {
-                                coroutineScope.launch {
-                                    if (pagerState.currentPage == pagerState.pageCount - 1) {
-                                        context.configsDataStore.updateData { configs ->
-                                            configs.toBuilder().setOnboardingCompleted(true).build()
-                                        }
-                                    } else {
-                                        pagerState.animateScrollToPage(
-                                            pagerState.currentPage + 1
-                                        )
+                                if (pagerState.currentPage == pagerState.pageCount - 1) {
+                                    eventSink(Event.CompleteOnboarding)
+                                } else {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
                                     }
                                 }
                             }
@@ -844,112 +1041,5 @@ fun LocationPermissions() {
                 )
             }
         }
-    }
-}
-
-@RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-fun getConnectedBluetoothDevices(context: Context): List<SavedDevice> {
-    return context.getSystemService<BluetoothManager>()?.adapter?.bondedDevices?.filterNotNull().orEmpty().map {
-        SavedDevice(it.name, it.address, IsConnected.invoke(it) as Boolean)
-    }
-}
-
-val IsConnected: Method = BluetoothDevice::class.java.getMethod("isConnected")
-
-data class SavedDevice(
-    val name: String,
-    val address: String,
-    val connected: Boolean
-)
-
-fun locationIntent(latitude: Double, longitude: Double) =
-    Intent(
-        Intent.ACTION_VIEW,
-        "https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}".toUri()
-    )
-
-fun buildShortcut(context: Context, device: Device) =
-    ShortcutInfoCompat.Builder(context, "navigate_to_${device.address}")
-        .setShortLabel(context.getString(R.string.shortcut_short_description, device.name))
-        .setLongLabel(context.getString(R.string.shortcut_long_description, device.name))
-        .setIcon(IconCompat.createWithResource(context, R.drawable.location_pin))
-        .addCapabilityBinding(
-            "actions.intent.OPEN_APP_FEATURE",
-            "feature",
-            context.resources.getStringArray(R.array.shortcut_feature_name).asList()
-        )
-        .setIntent(locationIntent(device.latitude, device.longitude))
-        .build()
-
-fun pushDynamicShortcut(context: Context, device: Device) {
-    val shortcut = buildShortcut(context, device)
-    ShortcutManagerCompat.pushDynamicShortcut(context, shortcut)
-}
-
-@Composable
-fun EmptyState(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .background(color = MaterialTheme.colorScheme.secondaryContainer)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Filled.LocationOn,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = stringResource(R.string.empty_state_title),
-            style = MaterialTheme.typography.displaySmall
-        )
-        Text(
-            text = stringResource(R.string.empty_state_body),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyLarge
-        )
-    }
-}
-
-@Composable
-fun LocationMap(modifier: Modifier = Modifier, device: Device) {
-    val context = LocalContext.current
-
-    val coordinates = LatLng(device.latitude, device.longitude)
-    val cameraPosition = CameraPosition.fromLatLngZoom(coordinates, 16f)
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = cameraPosition
-    }
-
-    LaunchedEffect(cameraPosition) {
-        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
-    }
-
-    GoogleMap(
-        modifier = modifier,
-        mergeDescendants = true,
-        cameraPositionState = cameraPositionState,
-        contentDescription = stringResource(R.string.open_maps),
-        properties = MapProperties(
-            mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.empty_map_style)
-        ),
-        uiSettings = MapUiSettings(
-            rotationGesturesEnabled = false,
-            scrollGesturesEnabled = false,
-            scrollGesturesEnabledDuringRotateOrZoom = false,
-            tiltGesturesEnabled = false,
-            zoomControlsEnabled = false,
-            zoomGesturesEnabled = false
-        ),
-        onMapClick = {
-            context.startActivity(locationIntent(device.latitude, device.longitude))
-        },
-        mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
-    ) {
-        val markerState = rememberUpdatedMarkerState(position = coordinates)
-        Marker(state = markerState)
     }
 }

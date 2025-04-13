@@ -1,16 +1,34 @@
 package me.martelli.wheresmycar
 
-import android.content.Context
 import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
-import androidx.datastore.migrations.SharedPreferencesMigration
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import me.martelli.wheresmycar.proto.Configs
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+
+class ConfigsRepo(private val dataStore: DataStore<Configs>) {
+    private val data = dataStore.data
+        .catch {
+            if (it is IOException) {
+                emit(Configs.getDefaultInstance())
+            } else {
+                throw it
+            }
+        }
+
+    val onboardingCompleted = data.map { it.onboardingCompleted }
+
+    suspend fun completeOnboarding() {
+        dataStore.updateData {
+            it.toBuilder().setOnboardingCompleted(true).build()
+        }
+    }
+}
 
 object ConfigsSerializer : Serializer<Configs> {
     override val defaultValue: Configs = Configs.getDefaultInstance()
@@ -27,28 +45,3 @@ object ConfigsSerializer : Serializer<Configs> {
         t.writeTo(output)
     }
 }
-
-internal fun configsMigrations(context: Context) = listOf(
-    SharedPreferencesMigration(
-        context = context,
-        sharedPreferencesName = "configurations"
-    ) { prefs, configs: Configs ->
-        configs.toBuilder().setOnboardingCompleted(prefs.getBoolean("onboarding_completed", false)).build()
-    }
-)
-
-val Context.configsDataStore by dataStore(
-    fileName = "configs.pb",
-    serializer = ConfigsSerializer,
-    produceMigrations = ::configsMigrations,
-)
-
-val Context.configs
-    get() = configsDataStore.data
-        .catch {
-            if (it is IOException) {
-                emit(Configs.getDefaultInstance())
-            } else {
-                throw it
-            }
-        }

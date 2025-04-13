@@ -71,6 +71,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        freeCompilerArgs += listOf("-Xjspecify-annotations=strict", "-Xtype-enhancement-improvements-strict-mode")
     }
 
     packaging {
@@ -122,7 +123,7 @@ dependencies {
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
     implementation(libs.material3)
-    implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.datastore)
     implementation(libs.protobuf.javalite)
     implementation(libs.maps)
