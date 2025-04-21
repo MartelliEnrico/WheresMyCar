@@ -94,7 +94,9 @@ android {
 }
 
 secrets {
+    defaultPropertiesFileName = "local.defaults.properties"
     propertiesFileName = "secrets.properties"
+    ignoreList += listOf("keyPassword", "storeFile", "storePassword")
 }
 
 protobuf {
