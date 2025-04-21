@@ -1,5 +1,5 @@
-import com.google.android.libraries.mapsplatform.secrets_gradle_plugin.loadPropertiesFile
 import com.google.protobuf.gradle.proto
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,8 +9,6 @@ plugins {
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.protobuf)
 }
-
-val secrets = rootProject.loadPropertiesFile("secrets.properties")
 
 android {
     namespace = "me.martelli.wheresmycar"
@@ -34,10 +32,17 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = "upload"
-            keyPassword = secrets.getProperty("keyPassword", "")
-            storeFile = file(secrets.getProperty("storeFile", "."))
-            storePassword = secrets.getProperty("storePassword", "")
+            val file = rootProject.file("release.properties")
+            if (file.exists()) {
+                val secrets = Properties().apply {
+                    load(file.inputStream())
+                }
+
+                keyAlias = "upload"
+                keyPassword = secrets["keyPassword"] as String
+                storeFile = file(secrets["storeFile"] as String)
+                storePassword = secrets["storePassword"] as String
+            }
         }
     }
 
@@ -95,7 +100,6 @@ android {
 
 secrets {
     defaultPropertiesFileName = "local.defaults.properties"
-    propertiesFileName = "secrets.properties"
     ignoreList += listOf("keyPassword", "storeFile", "storePassword")
 }
 

@@ -28,16 +28,16 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Create secrets.properties
+    - name: Create release.properties
       env:
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
         MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
       run: |
-        echo storePassword=$KEYSTORE_PASSWORD >> ./secrets.properties
-        echo keyPassword=$KEYSTORE_PASSWORD >> ./secrets.properties
-        echo storeFile=$KEYSTORE_PATH >> ./secrets.properties
-        echo MAPS_API_KEY=$MAPS_API_KEY >> ./secrets.properties
+        echo storePassword=$KEYSTORE_PASSWORD >> ./release.properties
+        echo keyPassword=$KEYSTORE_PASSWORD >> ./release.properties
+        echo storeFile=$KEYSTORE_PATH >> ./release.properties
+        echo MAPS_API_KEY=$MAPS_API_KEY >> ./release.properties
 
     - name: Decode keystore
       env:
@@ -59,7 +59,7 @@ jobs:
       env:
         KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
       run: |
-        rm secrets.properties
+        rm release.properties
         rm keystore-b64.txt
         rm app/$KEYSTORE_PATH
 
