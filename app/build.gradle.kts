@@ -26,8 +26,8 @@ android {
         applicationId = "me.martelli.wheresmycar"
         minSdk = 33
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = getVersionCode()
+        versionName = "2025.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -66,6 +66,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 
@@ -77,9 +78,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-        jniLibs {
-            excludes += "**/libdatastore_shared_counter.so"
         }
     }
 
@@ -143,4 +141,33 @@ dependencies {
 
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+}
+
+fun getVersionCode(): Int {
+    return file(".version").run { if (exists()) readText().toInt() else 1 }
+}
+
+abstract class IncrementVersionCode : DefaultTask() {
+    @get:OutputFile abstract val versionFile: RegularFileProperty
+
+    @TaskAction
+    fun action() {
+        val file = versionFile.get().asFile
+        val code = if (file.exists()) file.readText().toInt() else 0
+
+        file.writeText((code + 1).toString())
+    }
+}
+
+tasks.register<IncrementVersionCode>("incrementVersionCode") {
+    versionFile = layout.projectDirectory.file(".version")
+}
+
+tasks.register("fullVersion") {
+    val name = android.defaultConfig.versionName!!
+    val code = android.defaultConfig.versionCode!!
+
+    doLast {
+        println("$name+$code")
+    }
 }
