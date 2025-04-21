@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Where's My Car"
-include("app", "baselineprofile")
+include(":app", ":baselineprofile")
