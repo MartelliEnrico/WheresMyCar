@@ -1,14 +1,13 @@
-name: Build Release APK
+name: Build
 
 on:
   push:
     branches:
       - main
-  pull_request:
 
 jobs:
   build:
-    name: Build Release APK
+    name: Release Build
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -51,6 +50,10 @@ jobs:
     - name: Build
       run: ./gradlew incrementVersionCode :app:assembleRelease
 
+    - name: Get build version
+      id: get_build_version
+      run: echo "version=$(./gradlew fullVersion -q --console=plain)" >> "$GITHUB_OUTPUT"
+
     - name: Cleanup
       if: always()
       env:
@@ -59,10 +62,6 @@ jobs:
         rm secrets.properties
         rm keystore-b64.txt
         rm app/$KEYSTORE_PATH
-
-    - name: Get build version
-      id: get_build_version
-      run: echo "version=$(./gradlew fullVersion -q --console=plain)" >> "$GITHUB_OUTPUT"
 
     - name: Tag Release
       uses: EndBug/add-and-commit@v9
