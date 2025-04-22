@@ -117,3 +117,10 @@ private fun DefaultButton(onClick: () -> Unit) {
         Text(text = stringResource(R.string.grant_permissions))
     }
 }
+
+@Composable
+@OptIn(ExperimentalPermissionsApi::class)
+fun allPermissionsGranted(vararg permissions: String): Boolean {
+    val permissionState = rememberMultiplePermissionsState(permissions = permissions.toList())
+    return permissionState.revokedPermissions.none { it.permission in permissions }
+}

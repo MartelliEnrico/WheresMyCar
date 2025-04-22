@@ -47,6 +47,16 @@ jobs:
         echo $KEYSTORE_BASE64 > keystore-b64.txt
         base64 -d keystore-b64.txt > app/$KEYSTORE_PATH
 
+    - name: Clean Managed Devices
+      run: ./gradlew cleanManagedDevices --unused-only
+
+    - name: Generate Baseline Profile
+      run: |
+        ./gradlew :app:generateBaselineProfile \
+          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
+          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile \
+          -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=10
+
     - name: Build
       run: ./gradlew incrementVersionCode :app:assembleRelease
 
@@ -66,7 +76,7 @@ jobs:
     - name: Tag Release
       uses: EndBug/add-and-commit@v9
       with:
-        message: 'Update .version file'
+        message: 'Update for release'
         tag: 'v${{ steps.get_build_version.outputs.version }}'
 
     - name: Release

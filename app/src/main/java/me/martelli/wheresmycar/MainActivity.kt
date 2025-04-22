@@ -2,6 +2,7 @@ package me.martelli.wheresmycar
 
 import android.Manifest
 import android.app.PendingIntent
+import android.app.UiModeManager
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
@@ -19,7 +20,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,11 +41,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
@@ -81,6 +84,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -100,6 +104,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
@@ -108,7 +113,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat.checkSelfPermission
-import androidx.core.content.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
@@ -192,7 +196,6 @@ fun App(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
-    val context = LocalContext.current
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -200,51 +203,7 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
                     Text(stringResource(R.string.app_name))
                 },
                 actions = {
-                    PermissionBox(
-                        permission = Manifest.permission.BLUETOOTH_CONNECT,
-                        rationale = stringResource(R.string.bluetooth_rationale),
-                        button = {
-                            ErrorIconButton(onClick = it) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.bluetooth_connected),
-                                    contentDescription = null
-                                )
-                            }
-                        }
-                    ) {
-                        PermissionBox(
-                            permissions = listOf(
-                                Manifest.permission.ACCESS_COARSE_LOCATION,
-                                Manifest.permission.ACCESS_FINE_LOCATION
-                            ),
-                            rationale = stringResource(R.string.permissions_rationale),
-                            button = {
-                                ErrorIconButton(onClick = it) {
-                                    Icon(
-                                        imageVector = Icons.Filled.LocationOn,
-                                        contentDescription = null
-                                    )
-                                }
-                            }
-                        ) {
-                            PermissionBox(
-                                permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                                rationale = stringResource(
-                                    id = R.string.background_rationale,
-                                    context.packageManager.backgroundPermissionOptionLabel
-                                ),
-                                button = {
-                                    ErrorIconButton(onClick = it) {
-                                        Icon(
-                                            imageVector = Icons.Filled.LocationOn,
-                                            contentDescription = null
-                                        )
-                                    }
-                                },
-                                onGranted = {}
-                            )
-                        }
-                    }
+                    MainMenu()
                 }
             )
         },
@@ -370,6 +329,213 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MainMenu() {
+    val uiModeManager = LocalContext.current.getSystemService(UiModeManager::class.java)
+
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
+    var themeDialog by rememberSaveable { mutableStateOf(false) }
+
+    val allGranted = allPermissionsGranted(
+        Manifest.permission.BLUETOOTH_CONNECT,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+    )
+
+    val onClick = { menuExpanded = true }
+    val icon = movableContentOf {
+        Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = null
+        )
+    }
+
+    if (allGranted) {
+        IconButton(
+            onClick = onClick,
+            content = icon
+        )
+    } else {
+        ErrorIconButton(
+            onClick = onClick,
+            content = icon
+        )
+    }
+
+    DropdownMenu(
+        expanded = menuExpanded,
+        onDismissRequest = { menuExpanded = false },
+    ) {
+        PermissionBox(
+            permission = Manifest.permission.BLUETOOTH_CONNECT,
+            rationale = stringResource(R.string.bluetooth_rationale),
+            button = {
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(R.string.bluetooth_permission))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.bluetooth_connected),
+                            contentDescription = null
+                        )
+                    },
+                    onClick = it
+                )
+            },
+            onGranted = {}
+        )
+
+        PermissionBox(
+            permissions = listOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ),
+            rationale = stringResource(R.string.permissions_rationale),
+            button = {
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(R.string.location_permissions))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = it
+                )
+            }
+        ) {
+            val context = LocalContext.current
+            PermissionBox(
+                permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                rationale = stringResource(
+                    id = R.string.background_rationale,
+                    context.packageManager.backgroundPermissionOptionLabel
+                ),
+                button = {
+                    DropdownMenuItem(
+                        text = {
+                            Text(stringResource(R.string.location_permissions))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null
+                            )
+                        },
+                        onClick = it
+                    )
+                },
+                onGranted = {}
+            )
+        }
+
+        if (!allGranted) {
+            HorizontalDivider()
+        }
+
+        DropdownMenuItem(
+            text = {
+                Text(stringResource(R.string.choose_theme))
+            },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.round_brightness_4),
+                    contentDescription = null
+                )
+            },
+            onClick = {
+                menuExpanded = false
+                themeDialog = true
+            }
+        )
+
+        DropdownMenuItem(
+            text = {
+                Text(stringResource(R.string.version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE))
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null
+                )
+            },
+            onClick = {},
+            enabled = false
+        )
+    }
+
+    val themes = mapOf(
+        UiModeManager.MODE_NIGHT_AUTO to stringResource(R.string.theme_auto),
+        UiModeManager.MODE_NIGHT_NO to stringResource(R.string.theme_light),
+        UiModeManager.MODE_NIGHT_YES to stringResource(R.string.theme_dark),
+    )
+
+    var selectedTheme by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(themeDialog) { selectedTheme = null }
+
+    if (themeDialog) {
+        AlertDialog(
+            onDismissRequest = { themeDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        themeDialog = false
+
+                        selectedTheme?.let {
+                            uiModeManager.setApplicationNightMode(it)
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { themeDialog = false }
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+            title = {
+                Text(stringResource(R.string.choose_theme))
+            },
+            text = {
+                Column(Modifier.selectableGroup()) {
+                    themes.forEach { (theme, name) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .selectable(
+                                    selected = selectedTheme == theme,
+                                    onClick = { selectedTheme = theme },
+                                    role = Role.RadioButton
+                                )
+                                .padding(horizontal = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedTheme == theme,
+                                onClick = null
+                            )
+
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        )
     }
 }
 
@@ -636,7 +802,7 @@ fun EmptyState(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            imageVector = Icons.Filled.LocationOn,
+            imageVector = Icons.Default.LocationOn,
             contentDescription = null,
             modifier = Modifier.size(48.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -704,12 +870,14 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
                 val connectedDevices = getConnectedBluetoothDevices(context).filter {
                     devices.none { d -> d.address == it.address }
                 }
-                LazyColumn {
+                LazyColumn(Modifier.selectableGroup()) {
                     items(connectedDevices, key = { it.address }) {
                         ListItem(
-                            modifier = Modifier.clickable {
-                                selectedDevice = it
-                            },
+                            modifier = Modifier.selectable(
+                                selected = selectedDevice == it,
+                                onClick = { selectedDevice = it },
+                                role = Role.RadioButton
+                            ),
                             headlineContent = {
                                 Text(it.name)
                             },
@@ -762,7 +930,7 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
 
 @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
 fun getConnectedBluetoothDevices(context: Context): List<SavedDevice> {
-    return context.getSystemService<BluetoothManager>()?.adapter?.bondedDevices?.filterNotNull().orEmpty().map {
+    return context.getSystemService(BluetoothManager::class.java)?.adapter?.bondedDevices?.filterNotNull().orEmpty().map {
         SavedDevice(it.name, it.address, IsConnected.invoke(it) as Boolean)
     }
 }
@@ -1005,7 +1173,7 @@ fun LocationPermissions() {
         verticalArrangement = Arrangement.Bottom,
     ) {
         Icon(
-            imageVector = Icons.Filled.LocationOn,
+            imageVector = Icons.Default.LocationOn,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary

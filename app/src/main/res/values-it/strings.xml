@@ -30,4 +30,9 @@
     <string name="permissions_granted">Tutto pronto!</string>
     <string name="empty_state_title">Niente da vedere</string>
     <string name="empty_state_body">Per cominciare, seleziona la tua auto dalla lista dei dispositivi bluetooth salvati, e poi guida! L\'applicazione mostrerà l\'ultimo parcheggio qui.</string>
+    <string name="choose_theme">Scegli tema</string>
+    <string name="theme_auto">Segui Sistema</string>
+    <string name="theme_light">Chiaro</string>
+    <string name="theme_dark">Scuro</string>
+    <string name="version">Versione App:%nv%s (%s)</string>
 </resources>
