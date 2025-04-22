@@ -54,7 +54,6 @@ jobs:
       run: |
         ./gradlew :app:generateBaselineProfile \
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
-          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile \
           -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=10
 
     - name: Build
