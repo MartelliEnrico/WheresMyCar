@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -48,9 +49,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Badge
@@ -70,6 +71,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -349,7 +351,7 @@ fun MainMenu() {
     val onClick = { menuExpanded = true }
     val icon = movableContentOf {
         Icon(
-            imageVector = Icons.Default.MoreVert,
+            imageVector = Icons.Default.Settings,
             contentDescription = null
         )
     }
@@ -369,6 +371,7 @@ fun MainMenu() {
     DropdownMenu(
         expanded = menuExpanded,
         onDismissRequest = { menuExpanded = false },
+        modifier = Modifier.requiredSizeIn(minWidth = 168.dp)
     ) {
         PermissionBox(
             permission = Manifest.permission.BLUETOOTH_CONNECT,
@@ -444,12 +447,6 @@ fun MainMenu() {
             text = {
                 Text(stringResource(R.string.choose_theme))
             },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.round_brightness_4),
-                    contentDescription = null
-                )
-            },
             onClick = {
                 menuExpanded = false
                 themeDialog = true
@@ -460,14 +457,11 @@ fun MainMenu() {
             text = {
                 Text(stringResource(R.string.version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE))
             },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = null
-                )
-            },
             onClick = {},
-            enabled = false
+            enabled = false,
+            colors = MenuDefaults.itemColors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface
+            )
         )
     }
 
@@ -709,6 +703,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
             DropdownMenu(
                 expanded = menuExpanded,
                 onDismissRequest = { menuExpanded = false },
+                modifier = Modifier.requiredSizeIn(minWidth = 168.dp)
             ) {
                 DropdownMenuItem(
                     text = {
