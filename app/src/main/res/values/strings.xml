@@ -4,13 +4,13 @@
     <string name="rename_device">Rename</string>
     <string name="remove_device">Remove</string>
     <string name="device_connected">Connected</string>
-    <string name="shortcut_short_description">Find %s</string>
-    <string name="shortcut_long_description">Find %s in Maps</string>
+    <string name="shortcut_short_description">Find %1$s</string>
+    <string name="shortcut_long_description">Find %1$s in Maps</string>
     <string name="open_maps">Open Maps</string>
     <string name="no_position_saved">No position saved</string>
     <string name="add_shortcut">Add shortcut</string>
     <string name="permissions_rationale">The application needs location and bluetooth permissions to be able to listen for whenever your phone gets disconnected from your car, and to track the location when it happens.</string>
-    <string name="background_rationale">The application needs to be able to track your location while the app is in the background, so that it can save your car location more easily. Please select the option \"%s\" in the following screen.</string>
+    <string name="background_rationale">The application needs to be able to track your location while the app is in the background, so that it can save your car location more easily. Please select the option \"%1$s\" in the following screen.</string>
     <string name="permissions_title">Permissions required</string>
     <string name="grant_permissions">Grant permissions</string>
     <string name="continue_button">Continue</string>
@@ -35,5 +35,5 @@
     <string name="theme_auto">Follow system</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="version">Version: %s (%s)</string>
+    <string name="version">Version: %1$s (%2$s)</string>
 </resources>

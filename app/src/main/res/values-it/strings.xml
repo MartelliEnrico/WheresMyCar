@@ -3,13 +3,13 @@
     <string name="rename_device">Rinomina</string>
     <string name="remove_device">Rimuovi</string>
     <string name="device_connected">Connesso</string>
-    <string name="shortcut_short_description">Trova %s</string>
-    <string name="shortcut_long_description">Trova %s su Maps</string>
+    <string name="shortcut_short_description">Trova %1$s</string>
+    <string name="shortcut_long_description">Trova %1$s su Maps</string>
     <string name="open_maps">Apri Maps</string>
     <string name="no_position_saved">Nessuna posizione salvata</string>
     <string name="add_shortcut">Aggiungi shortcut</string>
     <string name="permissions_rationale">L\'applicazione necessita delle autorizzazioni per localizzazione esatta per poter tenere traccia di dove hai parcheggiato l\'auto</string>
-    <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%s\" nella pagina seguente.</string>
+    <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%1$s\" nella pagina seguente.</string>
     <string name="permissions_title">Autorizzazioni necessarie</string>
     <string name="grant_permissions">Concedi autorizzazioni</string>
     <string name="continue_button">Continua</string>
@@ -34,5 +34,5 @@
     <string name="theme_auto">Predefinito di sistema</string>
     <string name="theme_light">Chiaro</string>
     <string name="theme_dark">Scuro</string>
-    <string name="version">Versione: %s (%s)</string>
+    <string name="version">Versione: %1$s (%2$s)</string>
 </resources>

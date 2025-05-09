@@ -72,7 +72,6 @@ jobs:
       id: get_release_info
       run: |
         echo "version=$(./gradlew fullVersion -q --console=plain)" >> $GITHUB_OUTPUT
-        echo "commit=${{ github.event.workflow_run.head_commit.message }}" >> $GITHUB_OUTPUT
 
     - name: Cleanup
       if: always()
@@ -93,6 +92,6 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        body: '${{ steps.get_release_info.outputs.commit }}'
+        body: '${{ github.event.head_commit.message }}'
         files: app/build/outputs/apk/release/app-release.apk
         tag_name: 'v${{ steps.get_release_info.outputs.version }}'
