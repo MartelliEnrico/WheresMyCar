@@ -1,9 +1,6 @@
 name: Build
 
-on:
-  push:
-    branches:
-      - main
+on: workflow_dispatch
 
 jobs:
   build:
@@ -16,82 +13,74 @@ jobs:
       security-events: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Enable KVM
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
+      - name: Check Dispatch
+        run: |
+          if git tag --points-at HEAD; then
+            echo "Running without any changes."
+            exit 1
+          fi
 
-    - name: Set Up JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: zulu
-        java-version: 21
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | \
+            sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
+      - name: Set Up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 21
 
-    - name: Create release.properties
-      env:
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-        MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
-      run: |
-        echo storePassword=$KEYSTORE_PASSWORD >> ./release.properties
-        echo keyPassword=$KEYSTORE_PASSWORD >> ./release.properties
-        echo storeFile=$KEYSTORE_PATH >> ./release.properties
-        echo MAPS_API_KEY=$MAPS_API_KEY >> ./release.properties
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-    - name: Decode keystore
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-      run: |
-        echo $KEYSTORE_BASE64 > keystore-b64.txt
-        base64 -d keystore-b64.txt > app/$KEYSTORE_PATH
+      - name: Create Secrets
+        id: secrets
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: |
+          echo storePassword=$KEYSTORE_PASSWORD >> ./release.properties
+          echo keyPassword=$KEYSTORE_PASSWORD >> ./release.properties
+          echo storeFile=$KEYSTORE_PATH >> ./release.properties
+          echo MAPS_API_KEY=$MAPS_API_KEY >> ./release.properties
+          echo $KEYSTORE_BASE64 | base64 --decode > app/$KEYSTORE_PATH
 
-    - name: Build app and benchmark
-      run: ./gradlew incrementVersionCode assembleNonMinifiedRelease
+      - name: Build app and benchmark
+        run: ./gradlew incrementVersionCode assembleNonMinifiedRelease
 
-    - name: Clean Managed Devices
-      run: ./gradlew cleanManagedDevices --unused-only
+      - name: Clean Managed Devices
+        run: ./gradlew cleanManagedDevices --unused-only
 
-    - name: Generate Baseline Profile
-      run: |
-        ./gradlew :app:generateBaselineProfile \
-          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
-          -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=20
+      - name: Generate Baseline Profile
+        run: |
+          ./gradlew :app:generateBaselineProfile \
+            -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
+            -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=20
 
-    - name: Build Release
-      run: ./gradlew :app:assembleRelease
+      - name: Build Release
+        run: ./gradlew :app:assembleRelease
 
-    - name: Get release info
-      id: get_release_info
-      run: |
-        echo "version=$(./gradlew fullVersion -q --console=plain)" >> $GITHUB_OUTPUT
+      - name: Get Release info
+        id: release_info
+        run: echo "version=$(./gradlew fullVersion -q --console=plain)" >> $GITHUB_OUTPUT
 
-    - name: Cleanup
-      if: always()
-      env:
-        KEYSTORE_PATH: ${{ secrets.KEYSTORE_PATH }}
-      run: |
-        rm release.properties
-        rm keystore-b64.txt
-        rm app/$KEYSTORE_PATH
+      - name: Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Update for release'
 
-    - name: Tag Release
-      uses: EndBug/add-and-commit@v9
-      with:
-        default_author: github_actions
-        message: 'Update for release'
-        tag: 'v${{ steps.get_release_info.outputs.version }}'
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v2
-      with:
-        body: '${{ github.event.head_commit.message }}'
-        files: app/build/outputs/apk/release/app-release.apk
-        tag_name: 'v${{ steps.get_release_info.outputs.version }}'
+      - name: Create Release
+        run: |
+          gh release create v$APP_VERSION --latest --generate-notes \
+            app/build/outputs/apk/release/app-release.apk
+        env:
+          APP_VERSION: ${{ steps.release_info.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
