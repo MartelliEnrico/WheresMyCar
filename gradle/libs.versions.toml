@@ -1,9 +1,9 @@
 [versions]
 android = "8.10.0"
-kotlin = "2.1.20"
+kotlin = "2.1.21"
 lifecycle = "2.9.0"
 baselineprofile = "1.4.0-beta01"
-protobuf = "4.30.2"
+protobuf = "4.31.0"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.16.0"
@@ -13,7 +13,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.6.1"
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 activity-compose = "androidx.activity:activity-compose:1.10.1"
-compose-bom = "androidx.compose:compose-bom:2025.05.00"
+compose-bom = "androidx.compose:compose-bom:2025.05.01"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -21,7 +21,7 @@ ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 material3 = { module = "androidx.compose.material3:material3" }
-datastore = "androidx.datastore:datastore:1.1.6"
+datastore = "androidx.datastore:datastore:1.1.7"
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 maps = "com.google.maps.android:maps-compose:6.6.0"
