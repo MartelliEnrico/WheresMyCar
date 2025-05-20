@@ -48,7 +48,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AppShortcut
+import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Settings
@@ -104,7 +108,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
@@ -140,7 +143,6 @@ import me.martelli.wheresmycar.data.AppViewModel
 import me.martelli.wheresmycar.data.Event
 import me.martelli.wheresmycar.data.hasLocation
 import me.martelli.wheresmycar.proto.Device
-import me.martelli.wheresmycar.ui.theme.DarkGreen
 import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.lang.reflect.Method
 import kotlin.math.absoluteValue
@@ -383,7 +385,7 @@ fun MainMenu() {
                     },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.bluetooth_connected),
+                            imageVector = Icons.Default.BluetoothConnected,
                             contentDescription = null
                         )
                     },
@@ -715,7 +717,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                     },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.drive_file_rename),
+                            imageVector = Icons.Default.DriveFileRenameOutline,
                             contentDescription = null
                         )
                     },
@@ -732,7 +734,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                         },
                         leadingIcon = {
                             Icon(
-                                painter = painterResource(id = R.drawable.app_shortcut),
+                                imageVector = Icons.Default.AppShortcut,
                                 contentDescription = null
                             )
                         },
@@ -858,7 +860,7 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
             },
             icon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.directions_car),
+                    imageVector = Icons.Default.DirectionsCar,
                     contentDescription = null
                 )
             },
@@ -1102,7 +1104,7 @@ fun Welcome() {
         verticalArrangement = Arrangement.Bottom,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.directions_car),
+            imageVector = Icons.Default.DirectionsCar,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -1132,7 +1134,7 @@ fun BluetoothPermission() {
         verticalArrangement = Arrangement.Bottom,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.bluetooth_connected),
+            imageVector = Icons.Default.BluetoothConnected,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -1156,7 +1158,7 @@ fun BluetoothPermission() {
         ) {
             Text(
                 text = stringResource(R.string.permissions_granted),
-                color = DarkGreen
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -1203,11 +1205,16 @@ fun LocationPermissions() {
                 rationale = stringResource(
                     id = R.string.background_rationale,
                     context.packageManager.backgroundPermissionOptionLabel
-                )
+                ),
+                button = {
+                    Button(onClick = it) {
+                        Text(text = stringResource(R.string.grant_additional_permissions))
+                    }
+                }
             ) {
                 Text(
                     text = stringResource(R.string.permissions_granted),
-                    color = DarkGreen
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

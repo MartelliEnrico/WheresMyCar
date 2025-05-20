@@ -12,6 +12,7 @@
     <string name="background_rationale">L\'applicazione necessita dell\'autorizzazione per tracciare la tua posizione mentre non è in utilizzo, in modo da tracciare la posizione della tua auto più facilmente. Seleziona l\'opzione \"%1$s\" nella pagina seguente.</string>
     <string name="permissions_title">Autorizzazioni necessarie</string>
     <string name="grant_permissions">Concedi autorizzazioni</string>
+    <string name="grant_additional_permissions">Concedi autorizzazioni aggiuntive</string>
     <string name="continue_button">Continua</string>
     <string name="dismiss_button">Annulla</string>
     <string name="channel_name">Servizio in background</string>

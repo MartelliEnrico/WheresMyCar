@@ -13,7 +13,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.6.1"
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 activity-compose = "androidx.activity:activity-compose:1.10.1"
-compose-bom = "androidx.compose:compose-bom:2025.05.01"
+compose-bom = "androidx.compose:compose-bom-alpha:2025.05.01"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -21,6 +21,7 @@ ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 material3 = { module = "androidx.compose.material3:material3" }
+material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 datastore = "androidx.datastore:datastore:1.1.7"
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }

@@ -13,6 +13,7 @@
     <string name="background_rationale">The application needs to be able to track your location while the app is in the background, so that it can save your car location more easily. Please select the option \"%1$s\" in the following screen.</string>
     <string name="permissions_title">Permissions required</string>
     <string name="grant_permissions">Grant permissions</string>
+    <string name="grant_additional_permissions">Grant additional permissions</string>
     <string name="continue_button">Continue</string>
     <string name="dismiss_button">Dismiss</string>
     <string name="channel_name">Background service</string>

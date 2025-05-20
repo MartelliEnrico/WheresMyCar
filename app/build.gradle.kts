@@ -27,7 +27,7 @@ android {
         minSdk = 33
         targetSdk = 36
         versionCode = getVersionCode()
-        versionName = "2025.1"
+        versionName = "2025.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -122,14 +122,19 @@ protobuf {
 }
 
 dependencies {
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
+    testImplementation(composeBom)
+    androidTestImplementation(composeBom)
+
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)
-    implementation(platform(libs.compose.bom))
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
     implementation(libs.material3)
+    implementation(libs.material.icons.extended)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.datastore)
     implementation(libs.protobuf.javalite)
@@ -144,7 +149,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
     "baselineProfile"(project(":baselineprofile"))
 
