@@ -15,11 +15,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,6 +69,7 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -74,6 +77,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.RadioButton
@@ -84,6 +88,10 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.expressiveLightColorScheme
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -124,7 +132,6 @@ import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -141,14 +148,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import me.martelli.wheresmycar.data.AppViewModel
 import me.martelli.wheresmycar.data.Event
+import me.martelli.wheresmycar.data.UiState
 import me.martelli.wheresmycar.data.hasLocation
 import me.martelli.wheresmycar.proto.Device
-import me.martelli.wheresmycar.ui.theme.WheresMyCarTheme
 import java.lang.reflect.Method
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
 class MainActivity : ComponentActivity() {
+    private val appViewModel: AppViewModel by viewModels { AppViewModel.Factory }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val keepSplashscreen = MutableStateFlow(true)
         installSplashScreen().setKeepOnScreenCondition { keepSplashscreen.value }
@@ -157,24 +166,37 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            App(keepSplashscreen)
+            val uiState by appViewModel.uiState.collectAsState()
+
+            LaunchedEffect(uiState.loading) {
+                keepSplashscreen.value = uiState.loading
+            }
+
+            App(uiState = uiState)
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun App(
-    keepSplashscreen: MutableStateFlow<Boolean>,
-    appViewModel: AppViewModel = viewModel(factory = AppViewModel.Factory)
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = true,
+    uiState: UiState
 ) {
-    WheresMyCarTheme {
-        val uiState by appViewModel.uiState.collectAsState()
-
-        LaunchedEffect(uiState.loading) {
-            keepSplashscreen.value = uiState.loading
+    val context = LocalContext.current
+    val colorScheme = when {
+        dynamicColor -> {
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        val context = LocalContext.current
+        darkTheme -> darkColorScheme()
+        else -> expressiveLightColorScheme()
+    }
+
+    MaterialExpressiveTheme(
+        colorScheme = colorScheme,
+    ) {
         LaunchedEffect(context, uiState.devices) {
             if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
                 if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
