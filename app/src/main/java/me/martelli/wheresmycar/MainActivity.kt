@@ -586,7 +586,7 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         position = cameraPosition
     }
 
-    LaunchedEffect(cameraPosition) {
+    LaunchedEffect(cameraPositionState, cameraPosition) {
         cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
 
@@ -599,12 +599,16 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
             mapStyleOptions = MapStyleOptions.loadRawResourceStyle(context, R.raw.empty_map_style)
         ),
         uiSettings = MapUiSettings(
+            compassEnabled = false,
+            indoorLevelPickerEnabled = false,
+            mapToolbarEnabled = false,
+            myLocationButtonEnabled = false,
             rotationGesturesEnabled = false,
             scrollGesturesEnabled = false,
             scrollGesturesEnabledDuringRotateOrZoom = false,
             tiltGesturesEnabled = false,
             zoomControlsEnabled = false,
-            zoomGesturesEnabled = false
+            zoomGesturesEnabled = false,
         ),
         onMapClick = {
             context.startActivity(locationIntent(device.latitude, device.longitude))

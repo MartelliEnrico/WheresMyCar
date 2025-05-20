@@ -78,6 +78,8 @@ jobs:
     needs: [ analysis ]
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'}}
+    permissions:
+      pull-requests: write
 
     steps:
       - name: Dependabot metadata
