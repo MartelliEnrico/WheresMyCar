@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import com.google.protobuf.gradle.proto
 import java.util.Properties
 
@@ -52,6 +54,7 @@ android {
         }
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             signingConfig = signingConfigs["release"]
 
             proguardFiles(
@@ -66,7 +69,7 @@ android {
     }
 
     androidResources {
-        @Suppress("UnstableApiUsage")
+        generateLocaleConfig = true
         localeFilters += setOf("en", "it")
     }
 

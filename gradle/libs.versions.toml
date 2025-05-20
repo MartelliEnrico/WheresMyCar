@@ -35,7 +35,7 @@ androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro
 androidx-profileinstaller = "androidx.profileinstaller:profileinstaller:1.4.1"
 
 [plugins]
-android-application = {id = "com.android.application", version.ref = "android" }
+android-application = { id = "com.android.application", version.ref = "android" }
 android-test = { id = "com.android.test", version.ref = "android" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
