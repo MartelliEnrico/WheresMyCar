@@ -19,7 +19,6 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +32,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSizeIn
@@ -50,6 +50,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AppShortcut
 import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.Delete
@@ -71,6 +72,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -79,12 +81,11 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -92,8 +93,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.expressiveLightColorScheme
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -112,10 +111,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextRange
@@ -233,12 +230,14 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
                 }
             )
         },
+        floatingActionButton = {
+            FindCar(
+                devices = devices,
+                eventSink = eventSink
+            )
+        },
         contentWindowInsets = WindowInsets.statusBars
     ) { innerPadding ->
-        val dismissThreshold = with(LocalDensity.current) { 112.dp.toPx() }
-        val haptic = LocalHapticFeedback.current
-        val coroutineScope = rememberCoroutineScope()
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -247,84 +246,11 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(devices, key = { it.address }) {
-                val dismissState = rememberSwipeToDismissBoxState(
-                    positionalThreshold = { dismissThreshold }
-                )
-
-                // this is all a hack for rememberSwipeToDismissBoxState remembering too much
-                LaunchedEffect(Unit) {
-                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                }
-
-                LaunchedEffect(dismissState.currentValue) {
-                    delay(1)
-                    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-                        eventSink(Event.RemoveDevice(it))
-                    }
-                }
-
-                LaunchedEffect(dismissState.targetValue) {
-                    delay(1)
-                    if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    }
-                }
-
-                SwipeToDismissBox(
-                    state = dismissState,
-                    backgroundContent = {
-                        val color by animateColorAsState(
-                            when (dismissState.targetValue) {
-                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                else -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0f)
-                            }
-                        )
-
-                        Box(
-                            contentAlignment = Alignment.CenterEnd,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CardDefaults.shape)
-                                .background(color)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = null,
-                                modifier = Modifier.minimumInteractiveComponentSize(),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    },
+                DeviceCard(
                     modifier = Modifier.animateItem(),
-                    enableDismissFromStartToEnd = false
-                ) {
-                    Card(
-                        modifier = Modifier.fillParentMaxWidth(),
-                        colors = CardDefaults.elevatedCardColors(),
-                        elevation = CardDefaults.elevatedCardElevation(),
-                    ) {
-                        if (it.hasLocation) {
-                            LocationMap(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16f / 9, matchHeightConstraintsFirst = true)
-                                    .clip(CardDefaults.shape),
-                                device = it
-                            )
-                        }
-
-                        DeviceInfo(
-                            modifier = Modifier.padding(vertical = 8.dp),
-                            device = it,
-                            updateDevice = { eventSink(Event.UpdateDevice(it)) },
-                            removeDevice = {
-                                coroutineScope.launch {
-                                    dismissState.dismiss(SwipeToDismissBoxValue.EndToStart)
-                                }
-                            }
-                        )
-                    }
-                }
+                    device = it,
+                    eventSink = eventSink
+                )
             }
 
             if (devices.isEmpty()) {
@@ -338,23 +264,33 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
                     )
                 }
             }
-
-            item("find_car") {
-                Box(
-                    modifier = Modifier
-                        .animateItem()
-                        .fillParentMaxWidth()
-                ) {
-                    FindCar(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(vertical = 16.dp),
-                        devices,
-                        eventSink
-                    )
-                }
-            }
         }
+    }
+}
+
+@Composable
+fun DeviceCard(modifier: Modifier = Modifier, device: Device, eventSink: (Event) -> Unit) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.elevatedCardColors(),
+        elevation = CardDefaults.elevatedCardElevation(),
+    ) {
+        if (device.hasLocation) {
+            LocationMap(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9, matchHeightConstraintsFirst = true)
+                    .clip(CardDefaults.shape),
+                device = device
+            )
+        }
+
+        DeviceInfo(
+            modifier = Modifier.padding(vertical = 8.dp),
+            device = device,
+            updateDevice = { eventSink(Event.UpdateDevice(it)) },
+            removeDevice = { eventSink(Event.RemoveDevice(device)) },
+        )
     }
 }
 
@@ -842,6 +778,7 @@ fun EmptyState(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Event) -> Unit) {
     var openDialog by rememberSaveable { mutableStateOf(false) }
@@ -931,8 +868,8 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
         openDialog = isGranted
     }
 
-    Button(
-        modifier = modifier,
+    MediumFloatingActionButton(
+        modifier = modifier.navigationBarsPadding(),
         onClick = {
             when (PackageManager.PERMISSION_GRANTED) {
                 checkSelfPermission(
@@ -945,9 +882,15 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
                     launcher.launch(Manifest.permission.BLUETOOTH_CONNECT)
                 }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        elevation = FloatingActionButtonDefaults.loweredElevation()
     ) {
-        Text(stringResource(R.string.find_car))
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(28.dp)
+        )
     }
 }
 
