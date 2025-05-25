@@ -28,10 +28,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -49,6 +53,8 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AppShortcut
@@ -89,6 +95,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -111,16 +118,16 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -140,6 +147,11 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -217,17 +229,21 @@ fun App(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val hazeState = rememberHazeState(blurEnabled = true)
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(stringResource(R.string.app_name))
-                },
-                actions = {
-                    MainMenu()
-                }
+                modifier = Modifier.hazeEffect(state = hazeState, style = HazeMaterials.ultraThin()),
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = { MainMenu() },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                ),
+                scrollBehavior = scrollBehavior
             )
         },
         floatingActionButton = {
@@ -241,8 +257,10 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .hazeSource(state = hazeState)
                 .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 112.dp)
+                    + WindowInsets.navigationBars.asPaddingValues(),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(devices, key = { it.address }) {
@@ -267,6 +285,15 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
         }
     }
 }
+
+operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingValues(
+    start = this.calculateStartPadding(LayoutDirection.Ltr) +
+            other.calculateStartPadding(LayoutDirection.Ltr),
+    top = this.calculateTopPadding() + other.calculateTopPadding(),
+    end = this.calculateEndPadding(LayoutDirection.Ltr) +
+            other.calculateEndPadding(LayoutDirection.Ltr),
+    bottom = this.calculateBottomPadding() + other.calculateBottomPadding(),
+)
 
 @Composable
 fun DeviceCard(modifier: Modifier = Modifier, device: Device, eventSink: (Event) -> Unit) {
@@ -414,9 +441,7 @@ fun MainMenu() {
         )
 
         DropdownMenuItem(
-            text = {
-                Text(stringResource(R.string.version, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE))
-            },
+            text = { Text(stringResource(R.string.version, BuildConfig.VERSION_NAME)) },
             onClick = {},
             enabled = false,
             colors = MenuDefaults.itemColors(
@@ -582,21 +607,16 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
 
 @Composable
 fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Device) -> Unit, removeDevice: () -> Unit) {
-    var menuExpanded by rememberSaveable { mutableStateOf(false) }
     var openDialog by rememberSaveable { mutableStateOf(false) }
 
-    val context = LocalContext.current
-    val focusRequester = remember { FocusRequester() }
-
-    var name by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(device.name, selection = TextRange(device.name.length)))
-    }
-
-    LaunchedEffect(Unit) {
-        name = TextFieldValue(device.name, selection = TextRange(device.name.length))
-    }
-
     if (openDialog) {
+        val focusRequester = remember { FocusRequester() }
+        val nameState = rememberTextFieldState(initialText = device.name)
+
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+
         AlertDialog(
             onDismissRequest = { openDialog = false },
             confirmButton = {
@@ -604,7 +624,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                     onClick = {
                         openDialog = false
 
-                        val displayName = name.text.ifBlank { device.originalName }
+                        val displayName = nameState.text.ifBlank { device.originalName }.toString()
                         val newDevice = device.toBuilder().setName(displayName).build()
                         updateDevice(newDevice)
                     }
@@ -624,21 +644,18 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
             },
             text = {
                 TextField(
-                    value = name,
-                    onValueChange = { name = it },
+                    state = nameState,
                     modifier = Modifier.focusRequester(focusRequester),
-                    placeholder = {
-                        Text(text = device.originalName)
-                    },
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+                    placeholder = { Text(text = device.originalName) },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                    lineLimits = TextFieldLineLimits.SingleLine
                 )
-
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
-                }
             }
         )
     }
+
+    val context = LocalContext.current
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
 
     ListItem(
         modifier = modifier,
@@ -700,10 +717,18 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                             menuExpanded = false
 
                             val shortcut = buildShortcut(context, device)
-                            val shortcutResultIntent = ShortcutManagerCompat.createShortcutResultIntent(context, shortcut)
-                            val successCallback = PendingIntent.getBroadcast(context, 0, shortcutResultIntent, PendingIntent.FLAG_IMMUTABLE)
+                            val successCallback = PendingIntent.getBroadcast(
+                                context,
+                                0,
+                                ShortcutManagerCompat.createShortcutResultIntent(context, shortcut),
+                                PendingIntent.FLAG_IMMUTABLE
+                            )
 
-                            ShortcutManagerCompat.requestPinShortcut(context, shortcut, successCallback.intentSender)
+                            ShortcutManagerCompat.requestPinShortcut(
+                                context,
+                                shortcut,
+                                successCallback.intentSender
+                            )
                         }
                     )
                 }
@@ -889,7 +914,7 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
         Icon(
             imageVector = Icons.Default.Add,
             contentDescription = null,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(FloatingActionButtonDefaults.MediumIconSize)
         )
     }
 }

@@ -145,6 +145,8 @@ dependencies {
     implementation(libs.splashscreen)
     implementation(libs.core.google.shortcuts)
     implementation(libs.androidx.profileinstaller)
+    implementation(libs.haze)
+    implementation(libs.haze.materials)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

@@ -36,5 +36,5 @@
     <string name="theme_auto">Follow system</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="version">Version: %1$s (%2$s)</string>
+    <string name="version">Version: %1$s</string>
 </resources>

@@ -4,6 +4,7 @@ kotlin = "2.1.21"
 lifecycle = "2.9.0"
 baselineprofile = "1.4.0-beta01"
 protobuf = "4.31.0"
+haze = "1.6.2"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.16.0"
@@ -34,6 +35,8 @@ core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
 androidx-uiautomator = "androidx.test.uiautomator:uiautomator:2.3.0"
 androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "baselineprofile" }
 androidx-profileinstaller = "androidx.profileinstaller:profileinstaller:1.4.1"
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android" }
