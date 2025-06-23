@@ -336,11 +336,13 @@ fun MainMenu() {
     )
 
     val onClick = { menuExpanded = true }
-    val icon = movableContentOf {
-        Icon(
-            imageVector = Icons.Default.Settings,
-            contentDescription = null
-        )
+    val icon = remember {
+        movableContentOf {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = null
+            )
+        }
     }
 
     if (allGranted) {
