@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import com.google.protobuf.gradle.proto
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
 plugins {
@@ -78,9 +79,11 @@ android {
         compose = true
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs += listOf("-Xjspecify-annotations=strict", "-Xtype-enhancement-improvements-strict-mode")
+    kotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+            freeCompilerArgs.addAll("-Xjspecify-annotations=strict", "-Xtype-enhancement-improvements-strict-mode")
+        }
     }
 
     packaging {

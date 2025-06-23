@@ -207,8 +207,8 @@ fun App(
         colorScheme = colorScheme,
     ) {
         LaunchedEffect(context, uiState.devices) {
-            if (ShortcutManagerCompat.getDynamicShortcuts(context).size == 0) {
-                if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).size > 0) {
+            if (ShortcutManagerCompat.getDynamicShortcuts(context).isEmpty()) {
+                if (ShortcutManagerCompat.getShortcuts(context, FLAG_MATCH_PINNED).isNotEmpty()) {
                     uiState.devices.forEach {
                         if (it.hasLocation) {
                             pushDynamicShortcut(context, it)
