@@ -2,7 +2,7 @@
 android = "8.11.1"
 kotlin = "2.2.0"
 lifecycle = "2.9.2"
-baselineprofile = "1.4.0-rc01"
+baselineprofile = "1.4.0"
 protobuf = "4.31.1"
 haze = "1.6.9"
 
