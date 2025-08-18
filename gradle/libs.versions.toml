@@ -1,5 +1,5 @@
 [versions]
-android = "8.12.0"
+android = "8.12.1"
 kotlin = "2.2.10"
 lifecycle = "2.9.2"
 baselineprofile = "1.4.0"
