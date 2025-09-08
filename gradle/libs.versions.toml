@@ -1,7 +1,7 @@
 [versions]
-android = "8.12.1"
+android = "8.13.0"
 kotlin = "2.2.10"
-lifecycle = "2.9.2"
+lifecycle = "2.9.3"
 baselineprofile = "1.4.0"
 protobuf = "4.32.0"
 haze = "1.6.10"
@@ -14,7 +14,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.7.0"
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 activity-compose = "androidx.activity:activity-compose:1.10.1"
-compose-bom = "androidx.compose:compose-bom-alpha:2025.08.00"
+compose-bom = "androidx.compose:compose-bom-alpha:2025.08.01"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -26,7 +26,7 @@ material-icons-extended = { module = "androidx.compose.material:material-icons-e
 datastore = "androidx.datastore:datastore:1.1.7"
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
-maps = "com.google.maps.android:maps-compose:6.7.2"
+maps = "com.google.maps.android:maps-compose:6.9.0"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.37.3"
 play-services-location = "com.google.android.gms:play-services-location:21.3.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.10.3"
