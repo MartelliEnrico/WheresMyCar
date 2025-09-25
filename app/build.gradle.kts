@@ -16,7 +16,7 @@ plugins {
 android {
     namespace = "me.martelli.wheresmycar"
     compileSdk = 36
-    buildToolsVersion = "36.0.0"
+    compileSdkMinor = 1
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -28,7 +28,7 @@ android {
         minSdk = 33
         targetSdk = 36
         versionCode = getVersionCode()
-        versionName = "2025.2"
+        versionName = "2025.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

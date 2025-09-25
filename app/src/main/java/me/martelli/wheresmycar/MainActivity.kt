@@ -573,10 +573,6 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         position = cameraPosition
     }
 
-    LaunchedEffect(cameraPositionState, cameraPosition) {
-        cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
-    }
-
     GoogleMap(
         modifier = modifier,
         mergeDescendants = true,
@@ -602,6 +598,10 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
         },
         mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
     ) {
+        LaunchedEffect(cameraPositionState, cameraPosition) {
+            cameraPositionState.animate(CameraUpdateFactory.newCameraPosition(cameraPosition))
+        }
+
         val markerState = rememberUpdatedMarkerState(position = coordinates)
         Marker(state = markerState)
     }
