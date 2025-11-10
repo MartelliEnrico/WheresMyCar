@@ -14,7 +14,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.7.0"
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 activity-compose = "androidx.activity:activity-compose:1.11.0"
-compose-bom = "androidx.compose:compose-bom-alpha:2025.10.01"
+compose-bom = "androidx.compose:compose-bom-alpha:2025.11.00"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -30,7 +30,7 @@ maps = "com.google.maps.android:maps-compose:6.12.1"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.37.3"
 play-services-location = "com.google.android.gms:play-services-location:21.3.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.11.0"
-splashscreen = "androidx.core:core-splashscreen:1.0.1"
+splashscreen = "androidx.core:core-splashscreen:1.2.0"
 core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
 androidx-uiautomator = "androidx.test.uiautomator:uiautomator:2.3.0"
 androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "baselineprofile" }
