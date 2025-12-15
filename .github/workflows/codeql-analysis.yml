@@ -68,7 +68,7 @@ jobs:
           category: "/language:java-kotlin"
 
       - name: Upload lint results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: lint-results
           path: app/build/reports/lint-results-debug.html
