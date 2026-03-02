@@ -17,6 +17,7 @@ android {
     namespace = "me.martelli.wheresmycar"
     compileSdk = 36
     compileSdkMinor = 1
+    buildToolsVersion = "36.1.0.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
