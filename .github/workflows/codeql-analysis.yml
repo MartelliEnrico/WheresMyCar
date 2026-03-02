@@ -68,10 +68,11 @@ jobs:
           category: "/language:java-kotlin"
 
       - name: Upload lint results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lint-results
           path: app/build/reports/lint-results-debug.html
+          archive: false
 
   dependabot:
     name: Dependabot auto-merge
