@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Validate gradle wrapper
-        uses: gradle/actions/wrapper-validation@v5
+        uses: gradle/actions/wrapper-validation@v6
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -36,7 +36,7 @@ jobs:
           java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           dependency-graph: generate-and-submit
           build-scan-publish: true
