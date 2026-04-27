@@ -1,6 +1,6 @@
 [versions]
-android = "9.1.1"
-kotlin = "2.3.20"
+android = "9.2.0"
+kotlin = "2.3.21"
 lifecycle = "2.10.0"
 baselineprofile = "1.4.1"
 protobuf = "4.34.1"
@@ -14,7 +14,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.7.0"
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 activity-compose = "androidx.activity:activity-compose:1.13.0"
-compose-bom = "androidx.compose:compose-bom-alpha:2026.04.00"
+compose-bom = "androidx.compose:compose-bom-alpha:2026.04.01"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
