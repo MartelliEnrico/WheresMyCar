@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "me.martelli.wheresmycar.baselineprofile"
     compileSdk = 37
-    buildToolsVersion = "37.0.0.0"
+    buildToolsVersion = "37.0.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

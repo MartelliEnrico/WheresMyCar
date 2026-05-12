@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.google.protobuf.gradle.proto
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -10,12 +9,13 @@ plugins {
     alias(libs.plugins.maps.secrets)
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.protobuf)
+    alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "me.martelli.wheresmycar"
     compileSdk = 37
-    buildToolsVersion = "37.0.0.0"
+    buildToolsVersion = "37.0.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -79,17 +79,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
-    sourceSets {
-        named("main") {
-            java {
-                directories += "build/generated/sources/proto/main/java"
-            }
-            proto {
-                srcDir("src/main/proto")
-            }
-        }
-    }
 }
 
 baselineProfile {
@@ -112,7 +101,7 @@ dependencies {
     implementation(libs.material.icons.extended)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.datastore)
-    implementation(libs.protobuf.javalite)
+    implementation(libs.protobuf.kotlin.lite)
     implementation(libs.maps)
     implementation(libs.accompanist.permissions)
     implementation(libs.play.services.location)
@@ -122,6 +111,10 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
     implementation(libs.haze)
     implementation(libs.haze.materials)
+    implementation(libs.appfunctions)
+    implementation(libs.appfunctions.service)
+
+    ksp(libs.appfunctions.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -140,13 +133,17 @@ kotlin {
     }
 }
 
+ksp {
+    arg("appfunctions:aggregateAppFunctions", "true")
+}
+
 protobuf {
     protoc {
         artifact = libs.protoc.get().toString()
     }
     generateProtoTasks {
-        all().forEach {
-            it.builtins {
+        all().configureEach {
+            builtins {
                 create("java") {
                     option("lite")
                 }
