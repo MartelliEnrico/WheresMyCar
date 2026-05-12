@@ -5,15 +5,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.test)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.baselineprofile)
 }
 
 android {
     namespace = "me.martelli.wheresmycar.baselineprofile"
-    compileSdk = 36
-    compileSdkMinor = 1
-    buildToolsVersion = "36.1.0.0"
+    compileSdk = 37
+    buildToolsVersion = "37.0.0.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -22,36 +20,40 @@ android {
 
     defaultConfig {
         minSdk = 33
-        targetSdk = 36
+        targetSdk = 37
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    kotlin {
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_17
-            freeCompilerArgs.addAll("-Xjspecify-annotations=strict", "-Xtype-enhancement-improvements-strict-mode")
-        }
-    }
-
     targetProjectPath = ":app"
 
-    // This code creates the gradle managed device used to generate baseline profiles.
+    // This code creates the Gradle managed device used to generate baseline profiles.
     // To use GMD please invoke generation through the command line:
     // ./gradlew :app:generateBaselineProfile
     testOptions.managedDevices.allDevices {
-        create<ManagedVirtualDevice>("pixel9proApi36") {
+        create<ManagedVirtualDevice>("pixel9proApi37") {
             device = "Pixel 9 Pro"
-            apiLevel = 36
+            apiLevel = 37
             systemImageSource = "google"
+            pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_16KB_PAGES
         }
+    }
+}
+
+androidComponents {
+    onVariants { v ->
+        val artifactsLoader = v.artifacts.getBuiltArtifactsLoader()
+        v.instrumentationRunnerArguments.put(
+            "targetAppId",
+            v.testedApks.map { artifactsLoader.load(it)?.applicationId.toString() }
+        )
     }
 }
 
 // This is the configuration block for the Baseline Profile plugin.
 // You can specify to run the generators on a managed devices or connected devices.
 baselineProfile {
-    managedDevices += "pixel9proApi36"
+    managedDevices += "pixel9proApi37"
     useConnectedDevices = false
 }
 
@@ -62,12 +64,9 @@ dependencies {
     implementation(libs.androidx.benchmark.macro.junit4)
 }
 
-androidComponents {
-    onVariants { v ->
-        val artifactsLoader = v.artifacts.getBuiltArtifactsLoader()
-        v.instrumentationRunnerArguments.put(
-            "targetAppId",
-            v.testedApks.map { artifactsLoader.load(it)?.applicationId.toString() }
-        )
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+        freeCompilerArgs.addAll("-Xjspecify-annotations=strict")
     }
 }

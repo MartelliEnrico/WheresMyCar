@@ -6,7 +6,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.maps.secrets)
     alias(libs.plugins.baselineprofile)
@@ -15,9 +14,8 @@ plugins {
 
 android {
     namespace = "me.martelli.wheresmycar"
-    compileSdk = 36
-    compileSdkMinor = 1
-    buildToolsVersion = "36.1.0.0"
+    compileSdk = 37
+    buildToolsVersion = "37.0.0.0"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,7 +25,7 @@ android {
     defaultConfig {
         applicationId = "me.martelli.wheresmycar"
         minSdk = 33
-        targetSdk = 36
+        targetSdk = 37
         versionCode = getVersionCode()
         versionName = "2025.2.1"
 
@@ -66,10 +64,6 @@ android {
         }
     }
 
-    baselineProfile {
-        dexLayoutOptimization = true
-    }
-
     androidResources {
         generateLocaleConfig = true
         localeFilters += setOf("en", "it")
@@ -78,13 +72,6 @@ android {
     buildFeatures {
         buildConfig = true
         compose = true
-    }
-
-    kotlin {
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_17
-            freeCompilerArgs.addAll("-Xjspecify-annotations=strict", "-Xtype-enhancement-improvements-strict-mode")
-        }
     }
 
     packaging {
@@ -96,7 +83,7 @@ android {
     sourceSets {
         named("main") {
             java {
-                srcDir("build/generated/sources/proto/main/java")
+                directories += "build/generated/sources/proto/main/java"
             }
             proto {
                 srcDir("src/main/proto")
@@ -105,24 +92,8 @@ android {
     }
 }
 
-secrets {
-    defaultPropertiesFileName = "local.defaults.properties"
-    ignoreList += listOf("keyPassword", "storeFile", "storePassword")
-}
-
-protobuf {
-    protoc {
-        artifact = libs.protoc.get().toString()
-    }
-    generateProtoTasks {
-        all().forEach {
-            it.builtins {
-                create("java") {
-                    option("lite")
-                }
-            }
-        }
-    }
+baselineProfile {
+    dexLayoutOptimization = true
 }
 
 dependencies {
@@ -160,6 +131,33 @@ dependencies {
 
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+        freeCompilerArgs.addAll("-Xjspecify-annotations=strict")
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = libs.protoc.get().toString()
+    }
+    generateProtoTasks {
+        all().forEach {
+            it.builtins {
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
+}
+
+secrets {
+    defaultPropertiesFileName = "local.defaults.properties"
+    ignoreList += listOf("keyPassword", "storeFile", "storePassword")
 }
 
 fun getVersionCode(): Int {
