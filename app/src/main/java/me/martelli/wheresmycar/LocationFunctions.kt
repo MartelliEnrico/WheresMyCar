@@ -16,11 +16,13 @@ class LocationFunctions(
         /** The latitude of the coordinates. */
         val latitude: Double,
         /** The longitude of the coordinates. */
-        val longitude: Double
+        val longitude: Double,
+        /** The Google Maps http url of the coordinates. */
+        val url: String
     )
 
     /**
-     * Get the list of possible car names available.
+     * Get the list of available car names. Useful for querying the [findCar] function.
      *
      * @return The list of all the available car names.
      */
@@ -46,7 +48,11 @@ class LocationFunctions(
         val devices = devicesRepo.devices.first()
         val car = devices.firstOrNull { carName.equals(it.name, ignoreCase = true) }
         if (car?.hasLocation == true) {
-            return Location(car.latitude, car.longitude)
+            return Location(
+                car.latitude,
+                car.longitude,
+                googleMapsUrl(car)
+            )
         }
         return null
     }
