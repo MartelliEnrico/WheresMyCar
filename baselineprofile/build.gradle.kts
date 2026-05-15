@@ -36,6 +36,7 @@ android {
             apiLevel = 37
             systemImageSource = "google"
             pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_16KB_PAGES
+            testedAbi = "x86_64"
         }
     }
 }

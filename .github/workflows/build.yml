@@ -58,6 +58,13 @@ jobs:
             -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
             -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=20
 
+      - name: Upload Baseline Profile report
+        uses: actions/upload-artifact@v7
+        with:
+          name: baselineprof-report
+          path: baselineprofile/build/reports/androidTests/managedDevice/nonminifiedrelease/allDevices/index.html
+          archive: false
+
       - name: Build Release
         run: ./gradlew :app:assembleRelease
 
