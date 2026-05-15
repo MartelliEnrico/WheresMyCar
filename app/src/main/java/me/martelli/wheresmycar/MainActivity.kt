@@ -83,6 +83,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
@@ -135,6 +136,7 @@ import androidx.core.content.pm.ShortcutManagerCompat.FLAG_MATCH_PINNED
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.work.WorkManager
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -153,6 +155,7 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import me.martelli.wheresmycar.data.AppViewModel
 import me.martelli.wheresmycar.data.Event
@@ -160,6 +163,7 @@ import me.martelli.wheresmycar.data.UiState
 import me.martelli.wheresmycar.data.hasLocation
 import me.martelli.wheresmycar.proto.Device
 import java.lang.reflect.Method
+import java.util.UUID
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
@@ -635,6 +639,7 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Device) -> Unit, removeDevice: () -> Unit) {
     var openDialog by rememberSaveable { mutableStateOf(false) }
@@ -687,6 +692,17 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
     val context = LocalContext.current
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
 
+    var currentlyUpdating by remember { mutableStateOf(false) }
+    LaunchedEffect(device.address) {
+        WorkManager.getInstance(context)
+            .getWorkInfoByIdFlow(addressToUUID(device.address))
+            .collectLatest { workInfo ->
+                workInfo?.let { info ->
+                    currentlyUpdating = !info.state.isFinished
+                }
+            }
+    }
+
     ListItem(
         modifier = modifier,
         headlineContent = {
@@ -700,6 +716,13 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                 Text(text = timeAgo(device.time))
             } else {
                 Text(text = stringResource(R.string.no_position_saved))
+            }
+        },
+        leadingContent = {
+            AnimatedContent(currentlyUpdating) { visible ->
+                if (visible) {
+                    LoadingIndicator()
+                }
             }
         },
         trailingContent = {
@@ -786,6 +809,11 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     )
+}
+
+fun addressToUUID(address: String): UUID {
+    val addressLong = address.replace(":", "").toLong(16)
+    return UUID(0x5768657265734d79L, addressLong)
 }
 
 @Composable
