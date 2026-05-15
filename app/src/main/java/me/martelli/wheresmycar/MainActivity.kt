@@ -30,8 +30,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -64,6 +62,7 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
@@ -286,14 +285,22 @@ fun AppContent(devices: List<Device>, eventSink: (Event) -> Unit) {
     }
 }
 
-operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingValues(
-    start = this.calculateStartPadding(LayoutDirection.Ltr) +
-            other.calculateStartPadding(LayoutDirection.Ltr),
-    top = this.calculateTopPadding() + other.calculateTopPadding(),
-    end = this.calculateEndPadding(LayoutDirection.Ltr) +
-            other.calculateEndPadding(LayoutDirection.Ltr),
-    bottom = this.calculateBottomPadding() + other.calculateBottomPadding(),
-)
+operator fun PaddingValues.plus(other: PaddingValues): PaddingValues {
+    val self = this
+    return object : PaddingValues {
+        override fun calculateLeftPadding(layoutDirection: LayoutDirection) =
+            self.calculateLeftPadding(layoutDirection) + other.calculateLeftPadding(layoutDirection)
+
+        override fun calculateTopPadding() =
+            self.calculateTopPadding() + other.calculateTopPadding()
+
+        override fun calculateRightPadding(layoutDirection: LayoutDirection) =
+            self.calculateRightPadding(layoutDirection) + other.calculateRightPadding(layoutDirection)
+
+        override fun calculateBottomPadding() =
+            self.calculateBottomPadding() + other.calculateBottomPadding()
+    }
+}
 
 @Composable
 fun DeviceCard(modifier: Modifier = Modifier, device: Device, eventSink: (Event) -> Unit) {
@@ -333,6 +340,7 @@ fun MainMenu() {
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION,
         Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+        Manifest.permission.POST_NOTIFICATIONS,
     )
 
     val onClick = { menuExpanded = true }
@@ -427,6 +435,26 @@ fun MainMenu() {
                 onGranted = {}
             )
         }
+
+        PermissionBox(
+            permission = Manifest.permission.POST_NOTIFICATIONS,
+            rationale = stringResource(R.string.notification_rationale),
+            button = {
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(R.string.notification_permission))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.NotificationsActive,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = it
+                )
+            },
+            onGranted = {}
+        )
 
         if (!allGranted) {
             HorizontalDivider()
@@ -938,7 +966,7 @@ data class SavedDevice(
 
 @Composable
 fun Onboarding(eventSink: (Event) -> Unit) {
-    val pagerState = rememberPagerState { onboardingPages.size }
+    val pagerState = rememberPagerState { OnboardingPages.size }
 
     Scaffold(
         bottomBar = {
@@ -1013,7 +1041,7 @@ fun Onboarding(eventSink: (Event) -> Unit) {
             userScrollEnabled = false,
             key = { it }
         ) {
-            onboardingPages[it]()
+            OnboardingPages[it]()
         }
     }
 }
@@ -1080,11 +1108,12 @@ fun HorizontalPagerIndicator(
     }
 }
 
-val onboardingPages: List<@Composable () -> Unit> = listOf(
-    { Welcome() },
-    { BluetoothPermission() },
-    { LocationPermissions() },
-)
+val OnboardingPages: List<@Composable () -> Unit> = buildList {
+    add(::Welcome)
+    add(::BluetoothPermission)
+    add(::LocationPermissions)
+    add(::NotificationPermission)
+}
 
 @Composable
 fun Welcome() {
@@ -1209,6 +1238,46 @@ fun LocationPermissions() {
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun NotificationPermission() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 32.dp),
+        verticalArrangement = Arrangement.Bottom,
+    ) {
+        Icon(
+            imageVector = Icons.Default.NotificationsActive,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = stringResource(R.string.notification_permission),
+            style = MaterialTheme.typography.displayLarge,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        Text(
+            text = stringResource(R.string.notification_description),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        PermissionBox(
+            permission = Manifest.permission.POST_NOTIFICATIONS,
+            rationale = stringResource(R.string.notification_rationale)
+        ) {
+            Text(
+                text = stringResource(R.string.permissions_granted),
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

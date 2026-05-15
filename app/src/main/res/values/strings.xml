@@ -29,6 +29,9 @@
     <string name="bluetooth_rationale">Bluetooth permission is required so that the app can react whenever you exit your car</string>
     <string name="location_permissions">Location permissions</string>
     <string name="location_description">We\'ll need location permissions in order to save your car location, even when the app is in the background</string>
+    <string name="notification_permission">Notification permission</string>
+    <string name="notification_description">We\'ll need notification permission in order to show you whenever the app is saving your car location</string>
+    <string name="notification_rationale">Without notification permission the app will still function as expected, but you won\'t be notified when your car location is being saved</string>
     <string name="permissions_granted">All good!</string>
     <string name="empty_state_title">Nothing to see here</string>
     <string name="empty_state_body">To get started, select you car from your saved bluetooth devices, and then just drive! The app will show the last parking location here.</string>
