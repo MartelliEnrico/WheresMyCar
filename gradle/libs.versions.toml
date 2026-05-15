@@ -5,6 +5,7 @@ lifecycle = "2.10.0"
 baselineprofile = "1.5.0-alpha06"
 protobuf = "4.34.1"
 haze = "1.7.2"
+appfunctions = "1.0.0-alpha09"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.18.0"
@@ -24,7 +25,7 @@ ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 material3 = { module = "androidx.compose.material3:material3" }
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 datastore = "androidx.datastore:datastore:1.2.1"
-protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
+protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 maps = "com.google.maps.android:maps-compose:8.3.0"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.37.3"
@@ -37,6 +38,9 @@ androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro
 androidx-profileinstaller = "androidx.profileinstaller:profileinstaller:1.4.1"
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
+appfunctions = { module = "androidx.appfunctions:appfunctions", version.ref = "appfunctions" }
+appfunctions-service = { module = "androidx.appfunctions:appfunctions-service", version.ref = "appfunctions" }
+appfunctions-compiler = { module = "androidx.appfunctions:appfunctions-compiler", version.ref = "appfunctions" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android" }
@@ -46,3 +50,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
 protobuf = "com.google.protobuf:0.10.0"
+ksp = "com.google.devtools.ksp:2.3.8"

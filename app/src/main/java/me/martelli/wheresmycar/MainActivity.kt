@@ -551,16 +551,16 @@ fun buildShortcut(context: Context, device: Device) =
         .setShortLabel(context.getString(R.string.shortcut_short_description, device.name))
         .setLongLabel(context.getString(R.string.shortcut_long_description, device.name))
         .setIcon(IconCompat.createWithResource(context, R.drawable.location_pin))
-        .setIntent(locationIntent(device.latitude, device.longitude))
+        .setIntent(locationIntent(device))
         .build()
 
 fun shortcutId(device: Device) = "navigate_to_${device.address}"
 
-fun locationIntent(latitude: Double, longitude: Double) =
-    Intent(
-        Intent.ACTION_VIEW,
-        "https://www.google.com/maps/search/?api=1&query=${latitude}%2C${longitude}".toUri()
-    )
+fun locationIntent(device: Device) =
+    Intent(Intent.ACTION_VIEW, googleMapsUrl(device).toUri())
+
+fun googleMapsUrl(device: Device) =
+    "https://www.google.com/maps/search/?api=1&query=${device.latitude}%2C${device.longitude}"
 
 @Composable
 fun LocationMap(modifier: Modifier = Modifier, device: Device) {
@@ -594,7 +594,7 @@ fun LocationMap(modifier: Modifier = Modifier, device: Device) {
             zoomGesturesEnabled = false,
         ),
         onMapClick = {
-            context.startActivity(locationIntent(device.latitude, device.longitude))
+            context.startActivity(locationIntent(device))
         },
         mapColorScheme = ComposeMapColorScheme.FOLLOW_SYSTEM
     ) {
