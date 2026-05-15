@@ -45,7 +45,6 @@ appfunctions-compiler = { module = "androidx.appfunctions:appfunctions-compiler"
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android" }
 android-test = { id = "com.android.test", version.ref = "android" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
