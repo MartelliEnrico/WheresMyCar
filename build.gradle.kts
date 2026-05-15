@@ -6,4 +6,5 @@ plugins {
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.baselineprofile) apply false
     alias(libs.plugins.protobuf) apply false
+    alias(libs.plugins.ksp) apply false
 }

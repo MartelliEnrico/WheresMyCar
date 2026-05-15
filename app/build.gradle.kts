@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.google.protobuf.gradle.proto
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -79,6 +80,14 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    sourceSets {
+        named("main") {
+            proto {
+                srcDir("src/main/proto")
+            }
+        }
+    }
 }
 
 baselineProfile {
@@ -145,6 +154,9 @@ protobuf {
         all().configureEach {
             builtins {
                 create("java") {
+                    option("lite")
+                }
+                create("kotlin") {
                     option("lite")
                 }
             }
