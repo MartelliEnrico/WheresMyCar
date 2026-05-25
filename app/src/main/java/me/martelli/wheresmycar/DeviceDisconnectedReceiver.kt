@@ -28,7 +28,6 @@ class DeviceDisconnectedReceiver : BroadcastReceiver() {
 
             val workRequest = OneTimeWorkRequestBuilder<DeviceLocationWorker>()
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .setId(addressToUUID(device.address))
                 .setInputData(inputData)
                 .build()
 
