@@ -1,6 +1,8 @@
 package me.martelli.wheresmycar
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import androidx.appfunctions.service.AppFunctionConfiguration
 import androidx.datastore.dataStore
@@ -19,6 +21,18 @@ class MyApplication : Application(), AppFunctionConfiguration.Provider {
         configs = ConfigsRepo(configsDataStore)
         devices = DevicesRepo(this, devicesDataStore)
         locationFunctions = LocationFunctions(devices)
+
+        createNotificationChannel()
+    }
+
+    private fun createNotificationChannel() {
+        val notificationChannel = NotificationChannel(
+            DeviceLocationWorker.CHANNEL_ID,
+            getString(R.string.channel_name),
+            NotificationManager.IMPORTANCE_LOW
+        )
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(notificationChannel)
     }
 
     override val appFunctionConfiguration: AppFunctionConfiguration

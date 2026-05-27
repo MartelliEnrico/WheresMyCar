@@ -1,8 +1,6 @@
 package me.martelli.wheresmycar
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
@@ -10,7 +8,6 @@ import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.app.NotificationCompat
-import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
@@ -30,11 +27,27 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
             return Result.failure()
         }
 
-        val channelName = applicationContext.getString(R.string.channel_name)
-        val notificationChannel = NotificationChannel(CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_LOW)
-        val notificationManager = applicationContext.getSystemService<NotificationManager>()
-        notificationManager!!.createNotificationChannel(notificationChannel)
+        setForegroundNotification()
 
+        val location = getLocation()
+        val address = inputData.getString(ADDRESS)!!
+
+        val devicesRepo = (applicationContext as MyApplication).devices
+        val devices = devicesRepo.devices.first()
+
+        val device = devices.first { it.address == address }
+            .toBuilder()
+            .setLatitude(location.latitude)
+            .setLongitude(location.longitude)
+            .setTime(location.time)
+            .build()
+
+        devicesRepo.updateDevice(device)
+
+        return Result.success()
+    }
+
+    private suspend fun setForegroundNotification() {
         val title = applicationContext.getString(R.string.notification_title)
         val cancel = applicationContext.getString(R.string.cancel)
         val intent = WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
@@ -49,22 +62,6 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
             .build()
 
         setForeground(ForegroundInfo(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION))
-
-        val location = getLocation()
-        val address = inputData.getString(ADDRESS)!!
-
-        val devices = (applicationContext as MyApplication).devices
-
-        val device = devices.devices.first().first { it.address == address }
-            .toBuilder()
-            .setLatitude(location.latitude)
-            .setLongitude(location.longitude)
-            .setTime(location.time)
-            .build()
-
-        devices.updateDevice(device)
-
-        return Result.success()
     }
 
     @RequiresPermission(anyOf = [Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION])

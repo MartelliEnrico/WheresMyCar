@@ -10,6 +10,7 @@ message Device {
   optional double latitude = 4;
   optional double longitude = 5;
   optional int64 time = 6;
+  optional int64 last_connected_time = 7;
 }
 
 message Devices {
