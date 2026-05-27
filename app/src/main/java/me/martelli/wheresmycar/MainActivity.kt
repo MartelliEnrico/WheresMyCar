@@ -20,6 +20,7 @@ import androidx.annotation.RequiresPermission
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,7 +38,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -72,13 +72,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -335,13 +335,17 @@ fun MainMenu() {
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
     var themeDialog by rememberSaveable { mutableStateOf(false) }
 
-    val allGranted = allPermissionsGranted(
-        Manifest.permission.BLUETOOTH_CONNECT,
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-        Manifest.permission.POST_NOTIFICATIONS,
-    )
+    val bluetoothGranted = allPermissionsGranted(Manifest.permission.BLUETOOTH_CONNECT)
+    val locationGranted = allPermissionsGranted(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+    val backgroundLocationGranted = allPermissionsGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+    val notificationsGranted = allPermissionsGranted(Manifest.permission.BLUETOOTH_CONNECT)
+
+    val missingCount = listOf(
+        bluetoothGranted,
+        locationGranted && backgroundLocationGranted,
+        notificationsGranted
+    ).count { !it }
+    val allGranted = missingCount == 0
 
     val onClick = { menuExpanded = true }
     val icon = remember {
@@ -365,119 +369,135 @@ fun MainMenu() {
         )
     }
 
-    DropdownMenu(
-        expanded = menuExpanded,
-        onDismissRequest = { menuExpanded = false },
-        modifier = Modifier.requiredSizeIn(minWidth = 168.dp)
-    ) {
-        PermissionBox(
-            permission = Manifest.permission.BLUETOOTH_CONNECT,
-            rationale = stringResource(R.string.bluetooth_rationale),
-            button = {
-                DropdownMenuItem(
-                    text = {
-                        Text(stringResource(R.string.bluetooth_permission))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.BluetoothConnected,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = it
-                )
-            },
-            onGranted = {}
-        )
+    val groupInteractionSource = remember { MutableInteractionSource() }
 
-        PermissionBox(
-            permissions = listOf(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ),
-            rationale = stringResource(R.string.permissions_rationale),
-            button = {
-                DropdownMenuItem(
-                    text = {
-                        Text(stringResource(R.string.location_permissions))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = null
+    DropdownMenuPopup(
+        expanded = menuExpanded,
+        onDismissRequest = { menuExpanded = false }
+    ) {
+        if (!allGranted) {
+            DropdownMenuGroup(
+                shapes = MenuDefaults.groupShape(0, 2),
+                interactionSource = groupInteractionSource
+            ) {
+                PermissionBox(
+                    permission = Manifest.permission.BLUETOOTH_CONNECT,
+                    rationale = stringResource(R.string.bluetooth_rationale),
+                    button = {
+                        DropdownMenuItem(
+                            shape = if (missingCount == 1) MenuDefaults.standaloneItemShape else MenuDefaults.leadingItemShape,
+                            text = {
+                                Text(stringResource(R.string.bluetooth_permission))
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.BluetoothConnected,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = it
                         )
                     },
-                    onClick = it
+                    onGranted = {}
                 )
-            }
-        ) {
-            val context = LocalContext.current
-            PermissionBox(
-                permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                rationale = stringResource(
-                    id = R.string.background_rationale,
-                    context.packageManager.backgroundPermissionOptionLabel
-                ),
-                button = {
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(R.string.location_permissions))
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null
+
+                val shape = if (bluetoothGranted) MenuDefaults.leadingItemShape else if (notificationsGranted) MenuDefaults.trailingItemShape else MenuDefaults.middleItemShape
+                PermissionBox(
+                    permissions = listOf(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ),
+                    rationale = stringResource(R.string.permissions_rationale),
+                    button = {
+                        DropdownMenuItem(
+                            shape = shape,
+                            text = {
+                                Text(stringResource(R.string.location_permissions))
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = it
+                        )
+                    }
+                ) {
+                    val context = LocalContext.current
+                    PermissionBox(
+                        permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                        rationale = stringResource(
+                            id = R.string.background_rationale,
+                            context.packageManager.backgroundPermissionOptionLabel
+                        ),
+                        button = {
+                            DropdownMenuItem(
+                                shape = shape,
+                                text = {
+                                    Text(stringResource(R.string.location_permissions))
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.LocationOn,
+                                        contentDescription = null
+                                    )
+                                },
+                                onClick = it
                             )
                         },
-                        onClick = it
+                        onGranted = {}
                     )
-                },
-                onGranted = {}
-            )
-        }
+                }
 
-        PermissionBox(
-            permission = Manifest.permission.POST_NOTIFICATIONS,
-            rationale = stringResource(R.string.notification_rationale),
-            button = {
-                DropdownMenuItem(
-                    text = {
-                        Text(stringResource(R.string.notification_permission))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.NotificationsActive,
-                            contentDescription = null
+                PermissionBox(
+                    permission = Manifest.permission.POST_NOTIFICATIONS,
+                    rationale = stringResource(R.string.notification_rationale),
+                    button = {
+                        DropdownMenuItem(
+                            shape = if (missingCount == 1) MenuDefaults.standaloneItemShape else MenuDefaults.trailingItemShape,
+                            text = {
+                                Text(stringResource(R.string.notification_permission))
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.NotificationsActive,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = it
                         )
                     },
-                    onClick = it
+                    onGranted = {}
                 )
-            },
-            onGranted = {}
-        )
-
-        if (!allGranted) {
-            HorizontalDivider()
+            }
         }
 
-        DropdownMenuItem(
-            text = {
-                Text(stringResource(R.string.choose_theme))
-            },
-            onClick = {
-                menuExpanded = false
-                themeDialog = true
-            }
-        )
-
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.version, BuildConfig.VERSION_NAME)) },
-            onClick = {},
-            enabled = false,
-            colors = MenuDefaults.itemColors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface
+        DropdownMenuGroup(
+            shapes = MenuDefaults.groupShape(if (allGranted) 0 else 1, 1 + if (allGranted) 0 else 1),
+            interactionSource = groupInteractionSource
+        ) {
+            DropdownMenuItem(
+                shape = MenuDefaults.leadingItemShape,
+                text = {
+                    Text(stringResource(R.string.choose_theme))
+                },
+                onClick = {
+                    menuExpanded = false
+                    themeDialog = true
+                }
             )
-        )
+
+            DropdownMenuItem(
+                shape = MenuDefaults.trailingItemShape,
+                text = { Text(stringResource(R.string.version, BuildConfig.VERSION_NAME)) },
+                onClick = {},
+                enabled = false,
+                colors = MenuDefaults.itemColors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
     }
 
     val themes = mapOf(
@@ -686,6 +706,8 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
 
     val context = LocalContext.current
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
+    val groupInteractionSource = remember { MutableInteractionSource() }
+    val canPin = device.hasLocation && ShortcutManagerCompat.isRequestPinShortcutSupported(context)
 
     ListItem(
         modifier = modifier,
@@ -711,75 +733,85 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                     contentDescription = null
                 )
             }
-            DropdownMenu(
+            DropdownMenuPopup(
                 expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false },
-                modifier = Modifier.requiredSizeIn(minWidth = 168.dp)
+                onDismissRequest = { menuExpanded = false }
             ) {
-                DropdownMenuItem(
-                    text = {
-                        Text(stringResource(R.string.rename_device))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.DriveFileRenameOutline,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = {
-                        menuExpanded = false
-                        openDialog = true
-                    }
-                )
-
-                if (device.hasLocation && ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
+                DropdownMenuGroup(
+                    shapes = MenuDefaults.groupShape(0, 1 + if (canPin) 1 else 0),
+                    interactionSource = groupInteractionSource
+                ) {
                     DropdownMenuItem(
+                        shape = MenuDefaults.leadingItemShape,
                         text = {
-                            Text(stringResource(R.string.add_shortcut))
+                            Text(stringResource(R.string.rename_device))
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.AppShortcut,
+                                imageVector = Icons.Default.DriveFileRenameOutline,
                                 contentDescription = null
                             )
                         },
                         onClick = {
                             menuExpanded = false
+                            openDialog = true
+                        }
+                    )
 
-                            val shortcut = buildShortcut(context, device)
-                            val successCallback = PendingIntent.getBroadcast(
-                                context,
-                                0,
-                                ShortcutManagerCompat.createShortcutResultIntent(context, shortcut),
-                                PendingIntent.FLAG_IMMUTABLE
+                    DropdownMenuItem(
+                        shape = MenuDefaults.trailingItemShape,
+                        text = {
+                            Text(stringResource(R.string.remove_device))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null
                             )
-
-                            ShortcutManagerCompat.requestPinShortcut(
-                                context,
-                                shortcut,
-                                successCallback.intentSender
-                            )
+                        },
+                        onClick = {
+                            menuExpanded = false
+                            removeDevice()
                         }
                     )
                 }
 
-                HorizontalDivider()
+                if (canPin) {
+                    DropdownMenuGroup(
+                        shapes = MenuDefaults.groupShape(1, 2),
+                        interactionSource = groupInteractionSource
+                    ) {
+                        DropdownMenuItem(
+                            shape = MenuDefaults.standaloneItemShape,
+                            text = {
+                                Text(stringResource(R.string.add_shortcut))
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.AppShortcut,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
 
-                DropdownMenuItem(
-                    text = {
-                        Text(stringResource(R.string.remove_device))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null
+                                val shortcut = buildShortcut(context, device)
+                                val successCallback = PendingIntent.getBroadcast(
+                                    context,
+                                    0,
+                                    ShortcutManagerCompat.createShortcutResultIntent(context, shortcut),
+                                    PendingIntent.FLAG_IMMUTABLE
+                                )
+
+                                ShortcutManagerCompat.requestPinShortcut(
+                                    context,
+                                    shortcut,
+                                    successCallback.intentSender
+                                )
+                            }
                         )
-                    },
-                    onClick = {
-                        menuExpanded = false
-                        removeDevice()
                     }
-                )
+                }
             }
         },
         colors = ListItemDefaults.colors(
