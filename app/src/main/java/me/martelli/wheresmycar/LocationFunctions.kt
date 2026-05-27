@@ -17,13 +17,12 @@ class LocationFunctions(
         val latitude: Double,
         /** The longitude of the coordinates. */
         val longitude: Double,
-        /** The Google Maps http url of the coordinates. */
+        /** The Google Maps url of the coordinates. Useful for direct navigation. */
         val url: String
     )
 
     /**
-     * Get the list of available car names. Useful for querying the [findCar] function.
-     *
+     * Get the list of available car names.
      * @return The list of all the available car names.
      */
     @AppFunction(isDescribedByKDoc = true)
@@ -35,10 +34,10 @@ class LocationFunctions(
     }
 
     /**
-     * Find the last saved location of the car with the name [carName].
-     *
-     * @param carName The name saved for the car.
-     * @return The coordinates of the last saved location.
+     * Find the last saved parkin location of the car.
+     * Required workflow: Call 'getCarNames' first to obtain the list of available car names.
+     * @param carName The name of the car to find.
+     * @return The coordinates of the last saved parking location.
      */
     @AppFunction(isDescribedByKDoc = true)
     suspend fun findCar(
