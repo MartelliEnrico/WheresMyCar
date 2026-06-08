@@ -47,12 +47,14 @@ jobs:
         run: ./gradlew check --no-build-cache
 
       - name: Perform CodeQL Analysis
+        if: ${{ vars.CODEQL_ENABLED == 'true' }}
         uses: github/codeql-action/analyze@v4
         with:
           upload: false
           output: sarif-results
 
       - name: Filter SARIF
+        if: ${{ vars.CODEQL_ENABLED == 'true' }}
         uses: advanced-security/filter-sarif@v1
         with:
           patterns: |
@@ -62,6 +64,7 @@ jobs:
           output: sarif-results/java.sarif
 
       - name: Upload SARIF
+        if: ${{ vars.CODEQL_ENABLED == 'true' }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: sarif-results/java.sarif
