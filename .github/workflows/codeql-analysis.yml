@@ -24,6 +24,7 @@ jobs:
         uses: gradle/actions/wrapper-validation@v6
 
       - name: Initialize CodeQL
+        if: ${{ vars.CODEQL_ENABLED == 'true' }}
         uses: github/codeql-action/init@v4
         with:
           languages: "java-kotlin"
