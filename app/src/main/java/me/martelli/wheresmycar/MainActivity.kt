@@ -162,6 +162,7 @@ import me.martelli.wheresmycar.proto.Device
 import java.lang.reflect.Method
 import kotlin.math.absoluteValue
 import kotlin.math.sign
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
     private val appViewModel: AppViewModel by viewModels { AppViewModel.Factory }
@@ -471,6 +472,8 @@ fun MainMenu() {
                     onGranted = {}
                 )
             }
+
+            Spacer(Modifier.height(MenuDefaults.GroupSpacing))
         }
 
         DropdownMenuGroup(
@@ -478,7 +481,7 @@ fun MainMenu() {
             interactionSource = groupInteractionSource
         ) {
             DropdownMenuItem(
-                shape = MenuDefaults.leadingItemShape,
+                shape = if (!allGranted) MenuDefaults.middleItemShape else MenuDefaults.leadingItemShape,
                 text = {
                     Text(stringResource(R.string.choose_theme))
                 },
@@ -759,7 +762,7 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                     )
 
                     DropdownMenuItem(
-                        shape = MenuDefaults.trailingItemShape,
+                        shape = if (canPin) MenuDefaults.middleItemShape else MenuDefaults.trailingItemShape,
                         text = {
                             Text(stringResource(R.string.remove_device))
                         },
@@ -777,12 +780,14 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
                 }
 
                 if (canPin) {
+                    Spacer(Modifier.height(MenuDefaults.GroupSpacing))
+
                     DropdownMenuGroup(
                         shapes = MenuDefaults.groupShape(1, 2),
                         interactionSource = groupInteractionSource
                     ) {
                         DropdownMenuItem(
-                            shape = MenuDefaults.standaloneItemShape,
+                            shape = MenuDefaults.trailingItemShape,
                             text = {
                                 Text(stringResource(R.string.add_shortcut))
                             },
@@ -828,7 +833,7 @@ fun timeAgo(time: Long): String {
 
     LaunchedEffect(currentTimeMillis) {
         while (true) {
-            delay(1000)
+            delay(1.seconds)
             currentTimeMillis = System.currentTimeMillis()
         }
     }

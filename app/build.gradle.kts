@@ -186,10 +186,14 @@ abstract class IncrementVersionCode : DefaultTask() {
 }
 
 tasks.register<IncrementVersionCode>("incrementVersionCode") {
+    description = "Increment the .version file content to the next integer value"
+
     versionFile = layout.projectDirectory.file(".version")
 }
 
 tasks.register("fullVersion") {
+    description = "Return the full version of the application in the YEAR.MINOR+CODE format"
+
     val name = android.defaultConfig.versionName!!
     val code = android.defaultConfig.versionCode!!
 
