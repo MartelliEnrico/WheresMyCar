@@ -23,8 +23,8 @@
         android:theme="@style/Theme.WheresMyCar"
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="37"
-        appfn:description="@string/app_function_app_description"
-        appfn:displayDescription="@string/app_function_app_display_description">
+        appfn:description="@string/app_functions_description"
+        appfn:displayDescription="@string/app_functions_display_description">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />

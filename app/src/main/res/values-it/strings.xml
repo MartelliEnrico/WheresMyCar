@@ -39,6 +39,4 @@
     <string name="theme_light">Chiaro</string>
     <string name="theme_dark">Scuro</string>
     <string name="version">Versione: %1$s</string>
-    <string name="app_functions_description">Trova l\'ultima posizione salvata del parcheggio della tua auto.</string>
-    <string name="app_functions_display_description">Where\'s My Car AppFunctions</string>
 </resources>
