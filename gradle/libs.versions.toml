@@ -29,7 +29,7 @@ protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", ve
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 maps = "com.google.maps.android:maps-compose:8.3.0"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.37.3"
-play-services-location = "com.google.android.gms:play-services-location:21.3.0"
+play-services-location = "com.google.android.gms:play-services-location:21.4.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.11.2"
 splashscreen = "androidx.core:core-splashscreen:1.2.0"
 core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
