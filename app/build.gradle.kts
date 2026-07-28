@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.baselineprofile)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -28,7 +29,7 @@ android {
         minSdk = 33
         targetSdk = 37
         versionCode = getVersionCode()
-        versionName = "2026.1"
+        versionName = "2026.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -121,9 +122,11 @@ dependencies {
     implementation(libs.haze)
     implementation(libs.haze.materials)
     implementation(libs.appfunctions)
-    implementation(libs.appfunctions.service)
+    implementation(libs.hilt)
+    implementation(libs.hilt.work)
 
     ksp(libs.appfunctions.compiler)
+    ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -140,10 +143,6 @@ kotlin {
         jvmTarget = JvmTarget.JVM_17
         freeCompilerArgs.addAll("-Xjspecify-annotations=strict")
     }
-}
-
-ksp {
-    arg("appfunctions:aggregateAppFunctions", "true")
 }
 
 protobuf {

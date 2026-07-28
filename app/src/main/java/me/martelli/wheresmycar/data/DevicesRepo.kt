@@ -2,8 +2,8 @@ package me.martelli.wheresmycar.data
 
 import android.content.Context
 import androidx.datastore.core.CorruptionException
-import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
+import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -15,7 +15,8 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-class DevicesRepo(private val context: Context, private val dataStore: DataStore<Devices>) {
+class DevicesRepo(private val context: Context) {
+    private val dataStore = context.devicesDataStore
     private val data = dataStore.data
         .catch {
             if (it is IOException) {
@@ -50,22 +51,29 @@ class DevicesRepo(private val context: Context, private val dataStore: DataStore
             pushDynamicShortcut(context, device)
         }
     }
-}
 
-object DevicesSerializer : Serializer<Devices> {
-    override val defaultValue: Devices = Devices.getDefaultInstance()
+    companion object {
+        private val Context.devicesDataStore by dataStore(
+            fileName = "devices.pb",
+            serializer = DevicesSerializer,
+        )
 
-    override suspend fun readFrom(input: InputStream): Devices {
-        try {
-            return Devices.parseFrom(input)
-        } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException("Cannot read proto.", exception)
+        private object DevicesSerializer : Serializer<Devices> {
+            override val defaultValue: Devices = Devices.getDefaultInstance()
+
+            override suspend fun readFrom(input: InputStream): Devices {
+                try {
+                    return Devices.parseFrom(input)
+                } catch (exception: InvalidProtocolBufferException) {
+                    throw CorruptionException("Cannot read proto.", exception)
+                }
+            }
+
+            override suspend fun writeTo(t: Devices, output: OutputStream) {
+                t.writeTo(output)
+            }
         }
-    }
 
-    override suspend fun writeTo(t: Devices, output: OutputStream) {
-        t.writeTo(output)
+        val Device.hasLocation get() = hasLatitude() && hasLongitude()
     }
 }
-
-val Device.hasLocation get() = hasLatitude() && hasLongitude()

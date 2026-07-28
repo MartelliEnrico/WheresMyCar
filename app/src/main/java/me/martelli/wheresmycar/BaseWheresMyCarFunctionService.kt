@@ -1,15 +1,28 @@
 package me.martelli.wheresmycar
 
-import androidx.appfunctions.AppFunctionContext
+import androidx.annotation.RequiresApi
+import androidx.appfunctions.AppFunction
 import androidx.appfunctions.AppFunctionSerializable
-import androidx.appfunctions.service.AppFunction
+import androidx.appfunctions.AppFunctionService
+import androidx.appfunctions.AppFunctionServiceEntryPoint
+import dagger.hilt.android.AndroidEntryPoint
+import jakarta.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import me.martelli.wheresmycar.data.DevicesRepo
-import me.martelli.wheresmycar.data.hasLocation
+import me.martelli.wheresmycar.data.DevicesRepo.Companion.hasLocation
 
-class LocationFunctions(
-    private val devicesRepo: DevicesRepo
-) {
+@RequiresApi(36)
+@AndroidEntryPoint
+@AppFunctionServiceEntryPoint(
+    serviceName = "WheresMyCarFunctionService",
+    appFunctionXmlFileName = "wheres_my_car_function_service",
+)
+abstract class BaseWheresMyCarFunctionService : AppFunctionService() {
+    @Inject
+    internal lateinit var devicesRepo: DevicesRepo
+
     /** The location of the car. */
     @AppFunctionSerializable(isDescribedByKDoc = true)
     data class Location(
@@ -26,11 +39,9 @@ class LocationFunctions(
      * @return The list of all the available car names.
      */
     @AppFunction(isDescribedByKDoc = true)
-    suspend fun getCarNames(
-        appFunctionContext: AppFunctionContext
-    ): List<String> {
+    suspend fun getCarNames(): List<String> = withContext(Dispatchers.IO) {
         val devices = devicesRepo.devices.first()
-        return devices.map { it.name }
+        return@withContext devices.map { it.name }
     }
 
     /**
@@ -40,19 +51,17 @@ class LocationFunctions(
      * @return The coordinates of the last saved parking location.
      */
     @AppFunction(isDescribedByKDoc = true)
-    suspend fun findCar(
-        appFunctionContext: AppFunctionContext,
-        carName: String
-    ): Location? {
+    suspend fun findCar(carName: String): Location? = withContext(Dispatchers.IO) {
         val devices = devicesRepo.devices.first()
         val car = devices.firstOrNull { carName.equals(it.name, ignoreCase = true) }
-        if (car?.hasLocation == true) {
-            return Location(
+        return@withContext if (car?.hasLocation == true) {
+            Location(
                 car.latitude,
                 car.longitude,
                 googleMapsUrl(car)
             )
+        } else {
+            null
         }
-        return null
     }
 }

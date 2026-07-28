@@ -1,8 +1,9 @@
 package me.martelli.wheresmycar.data
 
+import android.content.Context
 import androidx.datastore.core.CorruptionException
-import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
+import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -11,7 +12,8 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-class ConfigsRepo(private val dataStore: DataStore<Configs>) {
+class ConfigsRepo(context: Context) {
+    private val dataStore = context.configsDataStore
     private val data = dataStore.data
         .catch {
             if (it is IOException) {
@@ -28,20 +30,27 @@ class ConfigsRepo(private val dataStore: DataStore<Configs>) {
             it.toBuilder().setOnboardingCompleted(true).build()
         }
     }
-}
 
-object ConfigsSerializer : Serializer<Configs> {
-    override val defaultValue: Configs = Configs.getDefaultInstance()
+    companion object {
+        private val Context.configsDataStore by dataStore(
+            fileName = "configs.pb",
+            serializer = ConfigsSerializer,
+        )
 
-    override suspend fun readFrom(input: InputStream): Configs {
-        try {
-            return Configs.parseFrom(input)
-        } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException("Cannot read proto.", exception)
+        private object ConfigsSerializer : Serializer<Configs> {
+            override val defaultValue: Configs = Configs.getDefaultInstance()
+
+            override suspend fun readFrom(input: InputStream): Configs {
+                try {
+                    return Configs.parseFrom(input)
+                } catch (exception: InvalidProtocolBufferException) {
+                    throw CorruptionException("Cannot read proto.", exception)
+                }
+            }
+
+            override suspend fun writeTo(t: Configs, output: OutputStream) {
+                t.writeTo(output)
+            }
         }
-    }
-
-    override suspend fun writeTo(t: Configs, output: OutputStream) {
-        t.writeTo(output)
     }
 }

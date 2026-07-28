@@ -146,6 +146,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
+import dagger.hilt.android.AndroidEntryPoint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -155,17 +156,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import me.martelli.wheresmycar.data.AppViewModel
+import me.martelli.wheresmycar.data.DevicesRepo.Companion.hasLocation
 import me.martelli.wheresmycar.data.Event
 import me.martelli.wheresmycar.data.UiState
-import me.martelli.wheresmycar.data.hasLocation
 import me.martelli.wheresmycar.proto.Device
 import java.lang.reflect.Method
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 import kotlin.time.Duration.Companion.seconds
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private val appViewModel: AppViewModel by viewModels { AppViewModel.Factory }
+    private val appViewModel: AppViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val keepSplashscreen = MutableStateFlow(true)
@@ -714,12 +716,6 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
 
     ListItem(
         modifier = modifier,
-        headlineContent = {
-            Text(
-                text = device.name,
-                style = MaterialTheme.typography.headlineMedium
-            )
-        },
         supportingContent = {
             if (device.time > 0) {
                 Text(text = timeAgo(device.time))
@@ -822,7 +818,12 @@ fun DeviceInfo(modifier: Modifier = Modifier, device: Device, updateDevice: (Dev
         colors = ListItemDefaults.colors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
-    )
+    ) {
+        Text(
+            text = device.name,
+            style = MaterialTheme.typography.headlineMedium
+        )
+    }
 }
 
 @Composable
@@ -930,9 +931,6 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
                                 onClick = { selectedDevice = it },
                                 role = Role.RadioButton
                             ),
-                            headlineContent = {
-                                Text(it.name)
-                            },
                             supportingContent = {
                                 if (it.connected) {
                                     Text(stringResource(R.string.device_connected))
@@ -947,7 +945,9 @@ fun FindCar(modifier: Modifier = Modifier, devices: List<Device>, eventSink: (Ev
                             colors = ListItemDefaults.colors(
                                 containerColor = AlertDialogDefaults.containerColor,
                             )
-                        )
+                        ) {
+                            Text(it.name)
+                        }
                     }
                 }
             }

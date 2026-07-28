@@ -3,25 +3,17 @@ package me.martelli.wheresmycar
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
-import androidx.appfunctions.service.AppFunctionConfiguration
-import androidx.datastore.dataStore
-import me.martelli.wheresmycar.data.ConfigsRepo
-import me.martelli.wheresmycar.data.ConfigsSerializer
-import me.martelli.wheresmycar.data.DevicesRepo
-import me.martelli.wheresmycar.data.DevicesSerializer
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import dagger.hilt.android.HiltAndroidApp
+import jakarta.inject.Inject
 
-class MyApplication : Application(), AppFunctionConfiguration.Provider {
-    lateinit var configs: ConfigsRepo
-    lateinit var devices: DevicesRepo
-    lateinit var locationFunctions: LocationFunctions
+@HiltAndroidApp
+class MyApplication : Application(), Configuration.Provider {
+    @Inject lateinit var workerFactory: HiltWorkerFactory
 
     override fun onCreate() {
         super.onCreate()
-        configs = ConfigsRepo(configsDataStore)
-        devices = DevicesRepo(this, devicesDataStore)
-        locationFunctions = LocationFunctions(devices)
-
         createNotificationChannel()
     }
 
@@ -35,21 +27,8 @@ class MyApplication : Application(), AppFunctionConfiguration.Provider {
         notificationManager.createNotificationChannel(notificationChannel)
     }
 
-    override val appFunctionConfiguration: AppFunctionConfiguration
-        get() =
-            AppFunctionConfiguration.Builder()
-                .addEnclosingClassFactory(LocationFunctions::class.java) { locationFunctions }
-                .build()
-
-    companion object {
-        private val Context.configsDataStore by dataStore(
-            fileName = "configs.pb",
-            serializer = ConfigsSerializer,
-        )
-
-        private val Context.devicesDataStore by dataStore(
-            fileName = "devices.pb",
-            serializer = DevicesSerializer,
-        )
-    }
+    override val workManagerConfiguration get() =
+        Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
 }

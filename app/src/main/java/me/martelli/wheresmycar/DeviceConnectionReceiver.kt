@@ -8,18 +8,23 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
+import dagger.hilt.android.AndroidEntryPoint
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import me.martelli.wheresmycar.data.DevicesRepo
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
+@AndroidEntryPoint
 class DeviceConnectionReceiver : BroadcastReceiver() {
+    @Inject lateinit var devicesRepo: DevicesRepo
+
     override fun onReceive(context: Context?, intent: Intent?) {
         context ?: return
         val action = intent?.action ?: return
         
         val device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java) ?: return
-        val devicesRepo = (context.applicationContext as MyApplication).devices
         val devices = runBlocking { devicesRepo.devices.first() }
 
         val savedDevice = devices.firstOrNull { it.address == device.address } ?: return

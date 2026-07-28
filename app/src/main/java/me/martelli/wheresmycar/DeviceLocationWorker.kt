@@ -8,6 +8,7 @@ import android.os.Looper
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat.checkSelfPermission
 import androidx.core.app.NotificationCompat
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
@@ -17,11 +18,19 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
+import me.martelli.wheresmycar.data.DevicesRepo
 import kotlin.coroutines.resume
 
-class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) {
+@HiltWorker
+class DeviceLocationWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted workerParams: WorkerParameters,
+    private val devicesRepo: DevicesRepo
+) : CoroutineWorker(context, workerParams) {
     override suspend fun doWork(): Result {
         if (checkSelfPermission(applicationContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return Result.failure()
@@ -32,7 +41,6 @@ class DeviceLocationWorker(context: Context, workerParams: WorkerParameters) : C
         val location = getLocation()
         val address = inputData.getString(ADDRESS)!!
 
-        val devicesRepo = (applicationContext as MyApplication).devices
         val devices = devicesRepo.devices.first()
 
         val device = devices.first { it.address == address }

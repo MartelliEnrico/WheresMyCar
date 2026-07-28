@@ -1,19 +1,17 @@
 package me.martelli.wheresmycar.data
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import me.martelli.wheresmycar.MyApplication
 import me.martelli.wheresmycar.proto.Device
 
-class AppViewModel(
+@HiltViewModel
+class AppViewModel @Inject constructor(
     private val configs: ConfigsRepo,
     private val devices: DevicesRepo,
 ) : ViewModel() {
@@ -60,15 +58,6 @@ class AppViewModel(
     private fun updateDevice(device: Device) {
         viewModelScope.launch {
             devices.updateDevice(device)
-        }
-    }
-
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[APPLICATION_KEY] as MyApplication)
-                AppViewModel(application.configs, application.devices)
-            }
         }
     }
 }
