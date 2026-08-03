@@ -21,11 +21,11 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Validate gradle wrapper
-        uses: gradle/actions/wrapper-validation@v6
+        uses: gradle/actions/wrapper-validation@v6.2.0
 
       - name: Initialize CodeQL
         if: ${{ vars.CODEQL_ENABLED == 'true' }}
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v4.37.4
         with:
           languages: "java-kotlin"
           queries: security-and-quality
@@ -37,7 +37,7 @@ jobs:
           java-version: 21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v6.2.0
         with:
           dependency-graph: generate-and-submit
           build-scan-publish: true
@@ -49,7 +49,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: ${{ vars.CODEQL_ENABLED == 'true' }}
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v4.37.4
         with:
           upload: false
           output: sarif-results
@@ -66,7 +66,7 @@ jobs:
 
       - name: Upload SARIF
         if: ${{ vars.CODEQL_ENABLED == 'true' }}
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v4.37.4
         with:
           sarif_file: sarif-results/java.sarif
           category: "/language:java-kotlin"
