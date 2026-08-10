@@ -52,5 +52,5 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
 protobuf = "com.google.protobuf:0.10.0"
-ksp = "com.google.devtools.ksp:2.3.10"
+ksp = "com.google.devtools.ksp:2.3.11"
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
