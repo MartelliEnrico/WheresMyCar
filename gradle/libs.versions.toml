@@ -3,10 +3,11 @@ android = "9.3.1"
 kotlin = "2.4.10"
 lifecycle = "2.11.0"
 baselineprofile = "1.5.0-rc01"
-protobuf = "4.35.1"
+protobuf = "4.36.0"
 haze = "1.7.2"
 appfunctions = "1.0.0-alpha10"
 hilt = "2.60.1"
+hilt-android = "1.4.0"
 
 [libraries]
 core-ktx = "androidx.core:core-ktx:1.19.0"
@@ -16,7 +17,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.7.0"
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 activity-compose = "androidx.activity:activity-compose:1.13.0"
-compose-bom = "androidx.compose:compose-bom-alpha:2026.07.01"
+compose-bom = "androidx.compose:compose-bom-alpha:2026.08.00"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -28,7 +29,7 @@ material-icons-extended = { module = "androidx.compose.material:material-icons-e
 datastore = "androidx.datastore:datastore:1.2.1"
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
-maps = "com.google.maps.android:maps-compose:8.4.0"
+maps = "com.google.maps.android:maps-compose:8.5.0"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.37.3"
 play-services-location = "com.google.android.gms:play-services-location:21.4.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.11.2"
@@ -43,7 +44,8 @@ appfunctions = { module = "androidx.appfunctions:appfunctions", version.ref = "a
 appfunctions-compiler = { module = "androidx.appfunctions:appfunctions-compiler", version.ref = "appfunctions" }
 hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
-hilt-work = "androidx.hilt:hilt-work:1.4.0"
+hilt-ext-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt-android" }
+hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hilt-android" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android" }

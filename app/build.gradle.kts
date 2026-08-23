@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.android.build.api.variant.impl.VariantOutputImpl
 import com.google.protobuf.gradle.proto
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
@@ -91,6 +92,21 @@ android {
     }
 }
 
+androidComponents {
+    onVariants { variant ->
+        val applicationId = variant.applicationId.get()
+
+        variant.outputs.forEach { output ->
+            if (output is VariantOutputImpl) {
+                val versionName = output.versionName.get()
+                val versionCode = output.versionCode.get()
+
+                output.outputFileName = "${applicationId}_${versionName}+${versionCode}.apk"
+            }
+        }
+    }
+}
+
 baselineProfile {
     dexLayoutOptimization = true
 }
@@ -98,7 +114,6 @@ baselineProfile {
 dependencies {
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
-    testImplementation(composeBom)
     androidTestImplementation(composeBom)
 
     implementation(libs.core.ktx)
@@ -121,21 +136,29 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
     implementation(libs.haze)
     implementation(libs.haze.materials)
+
     implementation(libs.appfunctions)
+    ksp(libs.appfunctions.compiler)
+
     implementation(libs.hilt)
     implementation(libs.hilt.work)
-
-    ksp(libs.appfunctions.compiler)
     ksp(libs.hilt.compiler)
+    ksp(libs.hilt.ext.compiler)
 
     testImplementation(libs.junit)
+
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ui.test.junit4)
-    "baselineProfile"(project(":baselineprofile"))
+
+    baselineProfile(project(":baselineprofile"))
 
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+}
+
+hilt {
+    enableAggregatingTask = true
 }
 
 kotlin {
