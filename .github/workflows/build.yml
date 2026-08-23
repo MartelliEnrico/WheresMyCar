@@ -8,9 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
-      actions: read
       contents: write
-      security-events: write
 
     steps:
       - name: Checkout repository
@@ -18,8 +16,7 @@ jobs:
 
       - name: Enable KVM
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | \
-            sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
@@ -46,26 +43,13 @@ jobs:
           echo MAPS_API_KEY=$MAPS_API_KEY >> ./release.properties
           echo $KEYSTORE_BASE64 | base64 --decode > app/$KEYSTORE_PATH
 
-      - name: Build app and benchmark
-        run: ./gradlew incrementVersionCode assembleNonMinifiedRelease
-
-      - name: Clean Managed Devices
-        run: ./gradlew cleanManagedDevices --unused-only
-
-      - name: Generate Baseline Profile
+      - name: Increment Version and Generate Baseline Profile
         run: |
-          ./gradlew :app:generateBaselineProfile \
+          ./gradlew incrementVersionCode :app:generateBaselineProfile \
             -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" \
             -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=20
 
-      - name: Upload Baseline Profile report
-        uses: actions/upload-artifact@v7
-        with:
-          name: baselineprof-report
-          path: baselineprofile/build/reports/androidTests/managedDevice/nonminifiedrelease/allDevices/index.html
-          archive: false
-
-      - name: Build Release
+      - name: Build Release APK
         run: ./gradlew :app:assembleRelease
 
       - name: Get Release info
@@ -75,11 +59,19 @@ jobs:
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: 'Update for release'
+          commit_message: 'Update for release [skip ci]'
 
       - name: Create Release
-        run: |
-          gh release create v$APP_VERSION --latest --generate-notes app/build/outputs/apk/release/*.apk
+        run: gh release create v$APP_VERSION --latest --generate-notes app/build/outputs/apk/release/*.apk
         env:
           APP_VERSION: ${{ steps.release_info.outputs.version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: ignore
+          archive: false
