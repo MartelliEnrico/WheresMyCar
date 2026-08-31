@@ -2,7 +2,7 @@
 android = "9.3.2"
 kotlin = "2.4.10"
 lifecycle = "2.11.0"
-baselineprofile = "1.5.0-rc01"
+baselineprofile = "1.5.0-rc02"
 protobuf = "4.36.0"
 haze = "1.7.2"
 appfunctions = "1.0.0-alpha10"
