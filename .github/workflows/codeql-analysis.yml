@@ -25,7 +25,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: ${{ vars.CODEQL_ENABLED == 'true' }}
-        uses: github/codeql-action/init@v4.37.8
+        uses: github/codeql-action/init@v4.37.9
         with:
           languages: "java-kotlin"
           queries: security-and-quality
@@ -49,7 +49,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: ${{ vars.CODEQL_ENABLED == 'true' }}
-        uses: github/codeql-action/analyze@v4.37.8
+        uses: github/codeql-action/analyze@v4.37.9
         with:
           upload: false
           output: sarif-results
@@ -66,7 +66,7 @@ jobs:
 
       - name: Upload SARIF
         if: ${{ vars.CODEQL_ENABLED == 'true' }}
-        uses: github/codeql-action/upload-sarif@v4.37.8
+        uses: github/codeql-action/upload-sarif@v4.37.9
         with:
           sarif_file: sarif-results/java.sarif
           category: "/language:java-kotlin"
