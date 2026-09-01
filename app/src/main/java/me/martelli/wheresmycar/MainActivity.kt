@@ -498,7 +498,7 @@ fun MainMenu() {
                 text = { Text(stringResource(R.string.version, BuildConfig.VERSION_NAME)) },
                 onClick = {},
                 enabled = false,
-                colors = MenuDefaults.selectableItemColors(
+                colors = MenuDefaults.itemColors(
                     disabledTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
