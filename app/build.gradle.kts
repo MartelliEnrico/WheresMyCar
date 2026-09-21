@@ -17,8 +17,12 @@ plugins {
 
 android {
     namespace = "me.martelli.wheresmycar"
-    compileSdk = 37
     buildToolsVersion = "37.0.0"
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
