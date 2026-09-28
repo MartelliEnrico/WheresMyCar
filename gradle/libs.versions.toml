@@ -5,7 +5,7 @@ lifecycle = "2.11.0"
 baselineprofile = "1.5.0"
 protobuf = "4.36.2"
 haze = "1.7.3"
-appfunctions = "1.0.0-alpha11"
+appfunctions = "1.0.0-alpha12"
 hilt = "2.60.1"
 hilt-android = "1.4.0"
 
