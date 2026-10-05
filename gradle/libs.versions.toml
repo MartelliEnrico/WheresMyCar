@@ -29,7 +29,7 @@ material-icons-extended = { module = "androidx.compose.material:material-icons-e
 datastore = "androidx.datastore:datastore:1.2.1"
 protobuf-kotlin-lite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
-maps = "com.google.maps.android:maps-compose:8.6.0"
+maps = "com.google.maps.android:maps-compose:9.0.0"
 accompanist-permissions = "com.google.accompanist:accompanist-permissions:0.37.3"
 play-services-location = "com.google.android.gms:play-services-location:21.4.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.12.0"
