@@ -1,7 +1,7 @@
 package me.martelli.wheresmycar
 
 import androidx.annotation.RequiresApi
-import androidx.appfunctions.AppFunction
+import androidx.appfunctions.AppFunctionDeclaration
 import androidx.appfunctions.AppFunctionSerializable
 import androidx.appfunctions.AppFunctionService
 import androidx.appfunctions.AppFunctionServiceEntryPoint
@@ -38,7 +38,7 @@ abstract class BaseWheresMyCarFunctionService : AppFunctionService() {
      * Get the list of available car names.
      * @return The list of all the available car names.
      */
-    @AppFunction(isDescribedByKDoc = true)
+    @AppFunctionDeclaration(isDescribedByKDoc = true)
     suspend fun getCarNames(): List<String> = withContext(Dispatchers.IO) {
         val devices = devicesRepo.devices.first()
         return@withContext devices.map { it.name }
@@ -50,7 +50,7 @@ abstract class BaseWheresMyCarFunctionService : AppFunctionService() {
      * @param carName The name of the car to find.
      * @return The coordinates of the last saved parking location.
      */
-    @AppFunction(isDescribedByKDoc = true)
+    @AppFunctionDeclaration(isDescribedByKDoc = true)
     suspend fun findCar(carName: String): Location? = withContext(Dispatchers.IO) {
         val devices = devicesRepo.devices.first()
         val car = devices.firstOrNull { carName.equals(it.name, ignoreCase = true) }
