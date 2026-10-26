@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AppFunctionAppMetadata xmlns:appfn="http://schemas.android.com/apk/res-auto"
-    appfn:description="Find the last saved parking location for your cars.
+    appfn:instructions="Find the last saved parking location for your cars.
 Operational Patterns:
   - Get the list of currently tracked cars by calling 'getCarNames'.
   - Get the coordinates (plus useful direct link to Google Maps) by calling 'findCar' with one of the car names.
