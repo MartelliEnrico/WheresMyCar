@@ -1,5 +1,5 @@
 [versions]
-android = "9.5.0"
+android = "9.5.1"
 kotlin = "2.4.21"
 lifecycle = "2.11.0"
 baselineprofile = "1.5.0"
@@ -17,7 +17,7 @@ espresso-core = "androidx.test.espresso:espresso-core:3.7.0"
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 activity-compose = "androidx.activity:activity-compose:1.13.0"
-compose-bom = "androidx.compose:compose-bom-alpha:2026.10.01"
+compose-bom = "androidx.compose:compose-bom-alpha:2026.11.00"
 ui = { module = "androidx.compose.ui:ui" }
 ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -35,7 +35,7 @@ play-services-location = "com.google.android.gms:play-services-location:21.4.0"
 work-runtime = "androidx.work:work-runtime-ktx:2.12.0"
 splashscreen = "androidx.core:core-splashscreen:1.2.0"
 core-google-shortcuts = "androidx.core:core-google-shortcuts:1.1.0"
-androidx-uiautomator = "androidx.test.uiautomator:uiautomator:2.4.0"
+androidx-uiautomator = "androidx.test.uiautomator:uiautomator:2.4.1"
 androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "baselineprofile" }
 androidx-profileinstaller = "androidx.profileinstaller:profileinstaller:1.4.1"
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
@@ -53,6 +53,6 @@ android-test = { id = "com.android.test", version.ref = "android" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 maps-secrets = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin:2.0.1"
 baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
-protobuf = "com.google.protobuf:0.10.0"
-ksp = "com.google.devtools.ksp:2.3.12"
+protobuf = "com.google.protobuf:0.10.1"
+ksp = "com.google.devtools.ksp:2.3.13"
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
